@@ -1,0 +1,14 @@
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023 aarch64 GNU/Linux
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=1, sum[0...1]=1
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=0, sum[0...0]=0
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=2, sum[0...2]=3
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=3, sum[0...3]=6
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=4, sum[0...4]=10
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=5, sum[0...5]=15
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=6, sum[0...6]=21
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=7, sum[0...7]=28
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=8, sum[0...8]=36
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=9, sum[0...9]=45
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=10, sum[0...10]=55
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: Thread idx=11, sum[0...11]=66
+Aug 17 22:47:37 raspberrypi [COURSE:1][ASSIGNMENT:1]: TEST COMPLETE
