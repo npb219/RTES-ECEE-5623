@@ -1,0 +1,306 @@
+Sep 14 09:59:01 raspberrypi posix_clock: Before adjustments to scheduling policy:
+Sep 14 09:59:01 raspberrypi posix_clock: Pthread policy is SCHED_OTHER
+Sep 14 09:59:01 raspberrypi posix_clock: After adjustments to scheduling policy:
+Sep 14 09:59:01 raspberrypi posix_clock: Pthread policy is SCHED_FIFO
+Sep 14 09:59:01 raspberrypi posix_clock: POSIX Clock demo using system RT clock with resolution:#012#0110 secs, 0 microsecs, 1 nanosecs
+Sep 14 09:59:01 raspberrypi posix_clock: test 0
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10055, nsec=10055241, sec=0.010055241
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 55241
+Sep 14 09:59:01 raspberrypi posix_clock: test 1
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10051, nsec=10051019, sec=0.010051019
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 51019
+Sep 14 09:59:01 raspberrypi posix_clock: test 2
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10052, nsec=10052388, sec=0.010052388
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 52388
+Sep 14 09:59:01 raspberrypi posix_clock: test 3
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043370, sec=0.010043370
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43370
+Sep 14 09:59:01 raspberrypi posix_clock: test 4
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10044, nsec=10044000, sec=0.010044000
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 44000
+Sep 14 09:59:01 raspberrypi posix_clock: test 5
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10057, nsec=10057018, sec=0.010057018
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 57018
+Sep 14 09:59:01 raspberrypi posix_clock: test 6
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10031, nsec=10031148, sec=0.010031148
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 31148
+Sep 14 09:59:01 raspberrypi posix_clock: test 7
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10028, nsec=10028815, sec=0.010028815
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 28815
+Sep 14 09:59:01 raspberrypi posix_clock: test 8
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10028, nsec=10028352, sec=0.010028352
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 28352
+Sep 14 09:59:01 raspberrypi posix_clock: test 9
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10027, nsec=10027463, sec=0.010027463
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 27463
+Sep 14 09:59:01 raspberrypi posix_clock: test 10
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10027, nsec=10027296, sec=0.010027296
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 27296
+Sep 14 09:59:01 raspberrypi posix_clock: test 11
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10027, nsec=10027222, sec=0.010027222
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 27222
+Sep 14 09:59:01 raspberrypi posix_clock: test 12
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10026, nsec=10026389, sec=0.010026389
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 26389
+Sep 14 09:59:01 raspberrypi posix_clock: test 13
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10027, nsec=10027241, sec=0.010027241
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 27241
+Sep 14 09:59:01 raspberrypi posix_clock: test 14
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10027, nsec=10027555, sec=0.010027555
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 27555
+Sep 14 09:59:01 raspberrypi posix_clock: test 15
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10035, nsec=10035722, sec=0.010035722
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 35722
+Sep 14 09:59:01 raspberrypi posix_clock: test 16
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037333, sec=0.010037333
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37333
+Sep 14 09:59:01 raspberrypi posix_clock: test 17
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037278, sec=0.010037278
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37278
+Sep 14 09:59:01 raspberrypi posix_clock: test 18
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039111, sec=0.010039111
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39111
+Sep 14 09:59:01 raspberrypi posix_clock: test 19
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10042, nsec=10042278, sec=0.010042278
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 42278
+Sep 14 09:59:01 raspberrypi posix_clock: test 20
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10041, nsec=10041704, sec=0.010041704
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 41704
+Sep 14 09:59:01 raspberrypi posix_clock: test 21
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10041, nsec=10041519, sec=0.010041519
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 41519
+Sep 14 09:59:01 raspberrypi posix_clock: test 22
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038740, sec=0.010038740
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38740
+Sep 14 09:59:01 raspberrypi posix_clock: test 23
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10040, nsec=10040334, sec=0.010040334
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 40334
+Sep 14 09:59:01 raspberrypi posix_clock: test 24
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039537, sec=0.010039537
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39537
+Sep 14 09:59:01 raspberrypi posix_clock: test 25
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10047, nsec=10047740, sec=0.010047740
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 47740
+Sep 14 09:59:01 raspberrypi posix_clock: test 26
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037648, sec=0.010037648
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37648
+Sep 14 09:59:01 raspberrypi posix_clock: test 27
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10034, nsec=10034741, sec=0.010034741
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 34741
+Sep 14 09:59:01 raspberrypi posix_clock: test 28
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10033, nsec=10033500, sec=0.010033500
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 33500
+Sep 14 09:59:01 raspberrypi posix_clock: test 29
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10034, nsec=10034000, sec=0.010034000
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 34000
+Sep 14 09:59:01 raspberrypi posix_clock: test 30
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10034, nsec=10034852, sec=0.010034852
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 34852
+Sep 14 09:59:01 raspberrypi posix_clock: test 31
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10036, nsec=10036574, sec=0.010036574
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 36574
+Sep 14 09:59:01 raspberrypi posix_clock: test 32
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10035, nsec=10035426, sec=0.010035426
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 35426
+Sep 14 09:59:01 raspberrypi posix_clock: test 33
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10033, nsec=10033870, sec=0.010033870
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 33870
+Sep 14 09:59:01 raspberrypi posix_clock: test 34
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10033, nsec=10033408, sec=0.010033408
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 33408
+Sep 14 09:59:01 raspberrypi posix_clock: test 35
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043259, sec=0.010043259
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43259
+Sep 14 09:59:01 raspberrypi posix_clock: test 36
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039093, sec=0.010039093
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39093
+Sep 14 09:59:01 raspberrypi posix_clock: test 37
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037500, sec=0.010037500
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37500
+Sep 14 09:59:01 raspberrypi posix_clock: test 38
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037407, sec=0.010037407
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37407
+Sep 14 09:59:01 raspberrypi posix_clock: test 39
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10042, nsec=10042463, sec=0.010042463
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 42463
+Sep 14 09:59:01 raspberrypi posix_clock: test 40
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10042, nsec=10042222, sec=0.010042222
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 42222
+Sep 14 09:59:01 raspberrypi posix_clock: test 41
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10041, nsec=10041334, sec=0.010041334
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 41334
+Sep 14 09:59:01 raspberrypi posix_clock: test 42
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10051, nsec=10051000, sec=0.010051000
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 51000
+Sep 14 09:59:01 raspberrypi posix_clock: test 43
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043926, sec=0.010043926
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43926
+Sep 14 09:59:01 raspberrypi posix_clock: test 44
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039111, sec=0.010039111
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39111
+Sep 14 09:59:01 raspberrypi posix_clock: test 45
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043204, sec=0.010043204
+Sep 14 09:59:01 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43204
+Sep 14 09:59:01 raspberrypi posix_clock: test 46
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10036, nsec=10036370, sec=0.010036370
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 36370
+Sep 14 09:59:02 raspberrypi posix_clock: test 47
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10034, nsec=10034833, sec=0.010034833
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 34833
+Sep 14 09:59:02 raspberrypi posix_clock: test 48
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10033, nsec=10033852, sec=0.010033852
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 33852
+Sep 14 09:59:02 raspberrypi posix_clock: test 49
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10033, nsec=10033426, sec=0.010033426
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 33426
+Sep 14 09:59:02 raspberrypi posix_clock: test 50
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10047, nsec=10047741, sec=0.010047741
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 47741
+Sep 14 09:59:02 raspberrypi posix_clock: test 51
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038223, sec=0.010038223
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38223
+Sep 14 09:59:02 raspberrypi posix_clock: test 52
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10035, nsec=10035648, sec=0.010035648
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 35648
+Sep 14 09:59:02 raspberrypi posix_clock: test 53
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10035, nsec=10035741, sec=0.010035741
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 35741
+Sep 14 09:59:02 raspberrypi posix_clock: test 54
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037722, sec=0.010037722
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37722
+Sep 14 09:59:02 raspberrypi posix_clock: test 55
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038686, sec=0.010038686
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38686
+Sep 14 09:59:02 raspberrypi posix_clock: test 56
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039926, sec=0.010039926
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39926
+Sep 14 09:59:02 raspberrypi posix_clock: test 57
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10045, nsec=10045056, sec=0.010045056
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 45056
+Sep 14 09:59:02 raspberrypi posix_clock: test 58
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10040, nsec=10040556, sec=0.010040556
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 40556
+Sep 14 09:59:02 raspberrypi posix_clock: test 59
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043907, sec=0.010043907
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43907
+Sep 14 09:59:02 raspberrypi posix_clock: test 60
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039963, sec=0.010039963
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39963
+Sep 14 09:59:02 raspberrypi posix_clock: test 61
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10048, nsec=10048648, sec=0.010048648
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 48648
+Sep 14 09:59:02 raspberrypi posix_clock: test 62
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038463, sec=0.010038463
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38463
+Sep 14 09:59:02 raspberrypi posix_clock: test 63
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037370, sec=0.010037370
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37370
+Sep 14 09:59:02 raspberrypi posix_clock: test 64
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10040, nsec=10040667, sec=0.010040667
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 40667
+Sep 14 09:59:02 raspberrypi posix_clock: test 65
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10053, nsec=10053556, sec=0.010053556
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 53556
+Sep 14 09:59:02 raspberrypi posix_clock: test 66
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037445, sec=0.010037445
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37445
+Sep 14 09:59:02 raspberrypi posix_clock: test 67
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038297, sec=0.010038297
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38297
+Sep 14 09:59:02 raspberrypi posix_clock: test 68
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038945, sec=0.010038945
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38945
+Sep 14 09:59:02 raspberrypi posix_clock: test 69
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10046, nsec=10046667, sec=0.010046667
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 46667
+Sep 14 09:59:02 raspberrypi posix_clock: test 70
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10041, nsec=10041167, sec=0.010041167
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 41167
+Sep 14 09:59:02 raspberrypi posix_clock: test 71
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10038, nsec=10038889, sec=0.010038889
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 38889
+Sep 14 09:59:02 raspberrypi posix_clock: test 72
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039666, sec=0.010039666
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39666
+Sep 14 09:59:02 raspberrypi posix_clock: test 73
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039296, sec=0.010039296
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39296
+Sep 14 09:59:02 raspberrypi posix_clock: test 74
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10054, nsec=10054407, sec=0.010054407
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 54407
+Sep 14 09:59:02 raspberrypi posix_clock: test 75
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10062, nsec=10062945, sec=0.010062945
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 62945
+Sep 14 09:59:02 raspberrypi posix_clock: test 76
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10052, nsec=10052741, sec=0.010052741
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 52741
+Sep 14 09:59:02 raspberrypi posix_clock: test 77
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10045, nsec=10045296, sec=0.010045296
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 45296
+Sep 14 09:59:02 raspberrypi posix_clock: test 78
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043556, sec=0.010043556
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43556
+Sep 14 09:59:02 raspberrypi posix_clock: test 79
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10063, nsec=10063370, sec=0.010063370
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 63370
+Sep 14 09:59:02 raspberrypi posix_clock: test 80
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10052, nsec=10052482, sec=0.010052482
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 52482
+Sep 14 09:59:02 raspberrypi posix_clock: test 81
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10053, nsec=10053722, sec=0.010053722
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 53722
+Sep 14 09:59:02 raspberrypi posix_clock: test 82
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10043, nsec=10043463, sec=0.010043463
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 43463
+Sep 14 09:59:02 raspberrypi posix_clock: test 83
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10042, nsec=10042222, sec=0.010042222
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 42222
+Sep 14 09:59:02 raspberrypi posix_clock: test 84
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10050, nsec=10050963, sec=0.010050963
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 50963
+Sep 14 09:59:02 raspberrypi posix_clock: test 85
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10058, nsec=10058611, sec=0.010058611
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 58611
+Sep 14 09:59:02 raspberrypi posix_clock: test 86
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10037, nsec=10037723, sec=0.010037723
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 37723
+Sep 14 09:59:02 raspberrypi posix_clock: test 87
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10045, nsec=10045370, sec=0.010045370
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 45370
+Sep 14 09:59:02 raspberrypi posix_clock: test 88
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039333, sec=0.010039333
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39333
+Sep 14 09:59:02 raspberrypi posix_clock: test 89
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10036, nsec=10036722, sec=0.010036722
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 36722
+Sep 14 09:59:02 raspberrypi posix_clock: test 90
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10036, nsec=10036556, sec=0.010036556
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 36556
+Sep 14 09:59:02 raspberrypi posix_clock: test 91
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10032, nsec=10032148, sec=0.010032148
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 32148
+Sep 14 09:59:02 raspberrypi posix_clock: test 92
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10033, nsec=10033870, sec=0.010033870
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 33870
+Sep 14 09:59:02 raspberrypi posix_clock: test 93
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10084, nsec=10084759, sec=0.010084759
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 84759
+Sep 14 09:59:02 raspberrypi posix_clock: test 94
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10060, nsec=10060259, sec=0.010060259
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 60259
+Sep 14 09:59:02 raspberrypi posix_clock: test 95
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10051, nsec=10051204, sec=0.010051204
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 51204
+Sep 14 09:59:02 raspberrypi posix_clock: test 96
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10063, nsec=10063945, sec=0.010063945
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 63945
+Sep 14 09:59:02 raspberrypi posix_clock: test 97
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10039, nsec=10039130, sec=0.010039130
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 39130
+Sep 14 09:59:02 raspberrypi posix_clock: test 98
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10032, nsec=10032834, sec=0.010032834
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 32834
+Sep 14 09:59:02 raspberrypi posix_clock: test 99
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK clock DT seconds = 0, msec=10, usec=10042, nsec=10042815, sec=0.010042815
+Sep 14 09:59:02 raspberrypi posix_clock: MY_CLOCK delay error = 0, nanoseconds = 42815
+Sep 14 09:59:02 raspberrypi posix_clock: TEST COMPLETE

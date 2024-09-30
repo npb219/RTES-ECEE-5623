@@ -1,0 +1,76 @@
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: 
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: INITIAL 
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Pthread policy is SCHED_OTHER
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: ADJUSTED 
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Pthread policy is SCHED_FIFO
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: main thread running on CPU=3, CPUs =
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]:  0
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]:  1
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]:  2
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]:  3
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: starter thread running on CPU=3
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=0, sum[0...0]=0, running on CPU=3, start=1726321665.275067, stop=1726321665.278591
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=1, sum[0...1]=1, running on CPU=3, start=1726321665.278927, stop=1726321665.287304
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=2, sum[0...2]=3, running on CPU=3, start=1726321665.287413, stop=1726321665.299104
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=3, sum[0...3]=6, running on CPU=3, start=1726321665.299190, stop=1726321665.315341
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=4, sum[0...4]=10, running on CPU=3, start=1726321665.315440, stop=1726321665.336034
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=5, sum[0...5]=15, running on CPU=3, start=1726321665.336116, stop=1726321665.361152
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=6, sum[0...6]=21, running on CPU=3, start=1726321665.361245, stop=1726321665.390740
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=7, sum[0...7]=28, running on CPU=3, start=1726321665.390840, stop=1726321665.424799
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=8, sum[0...8]=36, running on CPU=3, start=1726321665.424946, stop=1726321665.463338
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=9, sum[0...9]=45, running on CPU=3, start=1726321665.463439, stop=1726321665.506272
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=10, sum[0...10]=55, running on CPU=3, start=1726321665.506366, stop=1726321665.553660
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=11, sum[0...11]=66, running on CPU=3, start=1726321665.553756, stop=1726321665.605489
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=12, sum[0...12]=78, running on CPU=3, start=1726321665.605598, stop=1726321665.661802
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=13, sum[0...13]=91, running on CPU=3, start=1726321665.661905, stop=1726321665.722552
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=14, sum[0...14]=105, running on CPU=3, start=1726321665.722638, stop=1726321665.787731
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=15, sum[0...15]=120, running on CPU=3, start=1726321665.787830, stop=1726321665.857380
+Sep 14 09:47:45 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=16, sum[0...16]=136, running on CPU=3, start=1726321665.857491, stop=1726321665.931495
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=17, sum[0...17]=153, running on CPU=3, start=1726321665.931642, stop=1726321666.010118
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=18, sum[0...18]=171, running on CPU=3, start=1726321666.010254, stop=1726321666.093141
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=19, sum[0...19]=190, running on CPU=3, start=1726321666.093247, stop=1726321666.180584
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=20, sum[0...20]=210, running on CPU=3, start=1726321666.180694, stop=1726321666.320057
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=21, sum[0...21]=231, running on CPU=3, start=1726321666.320172, stop=1726321666.416408
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=22, sum[0...22]=253, running on CPU=3, start=1726321666.416525, stop=1726321666.517199
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=23, sum[0...23]=276, running on CPU=3, start=1726321666.517301, stop=1726321666.622443
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=24, sum[0...24]=300, running on CPU=3, start=1726321666.622554, stop=1726321666.732122
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=25, sum[0...25]=325, running on CPU=3, start=1726321666.732209, stop=1726321666.846251
+Sep 14 09:47:46 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=26, sum[0...26]=351, running on CPU=3, start=1726321666.846387, stop=1726321666.964872
+Sep 14 09:47:47 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=27, sum[0...27]=378, running on CPU=3, start=1726321666.965056, stop=1726321667.101869
+Sep 14 09:47:47 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=28, sum[0...28]=406, running on CPU=3, start=1726321667.102080, stop=1726321667.312420
+Sep 14 09:47:47 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=29, sum[0...29]=435, running on CPU=3, start=1726321667.312547, stop=1726321667.444396
+Sep 14 09:47:47 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=30, sum[0...30]=465, running on CPU=3, start=1726321667.444533, stop=1726321667.580852
+Sep 14 09:47:47 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=31, sum[0...31]=496, running on CPU=3, start=1726321667.580983, stop=1726321667.721729
+Sep 14 09:47:47 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=32, sum[0...32]=528, running on CPU=3, start=1726321667.721867, stop=1726321667.882078
+Sep 14 09:47:48 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=33, sum[0...33]=561, running on CPU=3, start=1726321667.882224, stop=1726321668.046951
+Sep 14 09:47:48 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=34, sum[0...34]=595, running on CPU=3, start=1726321668.047112, stop=1726321668.215656
+Sep 14 09:47:48 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=35, sum[0...35]=630, running on CPU=3, start=1726321668.215805, stop=1726321668.436412
+Sep 14 09:47:48 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=36, sum[0...36]=666, running on CPU=3, start=1726321668.436587, stop=1726321668.614578
+Sep 14 09:47:48 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=37, sum[0...37]=703, running on CPU=3, start=1726321668.614725, stop=1726321668.797160
+Sep 14 09:47:48 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=38, sum[0...38]=741, running on CPU=3, start=1726321668.797288, stop=1726321668.983626
+Sep 14 09:47:49 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=39, sum[0...39]=780, running on CPU=3, start=1726321668.983764, stop=1726321669.174547
+Sep 14 09:47:49 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=40, sum[0...40]=820, running on CPU=3, start=1726321669.174665, stop=1726321669.422037
+Sep 14 09:47:49 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=41, sum[0...41]=861, running on CPU=3, start=1726321669.422179, stop=1726321669.622407
+Sep 14 09:47:49 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=42, sum[0...42]=903, running on CPU=3, start=1726321669.622532, stop=1726321669.826662
+Sep 14 09:47:50 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=43, sum[0...43]=946, running on CPU=3, start=1726321669.826798, stop=1726321670.035384
+Sep 14 09:47:50 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=44, sum[0...44]=990, running on CPU=3, start=1726321670.035519, stop=1726321670.300672
+Sep 14 09:47:50 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=45, sum[0...45]=1035, running on CPU=3, start=1726321670.300798, stop=1726321670.518824
+Sep 14 09:47:50 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=46, sum[0...46]=1081, running on CPU=3, start=1726321670.518954, stop=1726321670.740899
+Sep 14 09:47:50 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=47, sum[0...47]=1128, running on CPU=3, start=1726321670.741016, stop=1726321670.967464
+Sep 14 09:47:51 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=48, sum[0...48]=1176, running on CPU=3, start=1726321670.967611, stop=1726321671.198988
+Sep 14 09:47:51 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=49, sum[0...49]=1225, running on CPU=3, start=1726321671.199109, stop=1726321671.482523
+Sep 14 09:47:51 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=50, sum[0...50]=1275, running on CPU=3, start=1726321671.482657, stop=1726321671.722370
+Sep 14 09:47:51 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=51, sum[0...51]=1326, running on CPU=3, start=1726321671.722496, stop=1726321671.966682
+Sep 14 09:47:52 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=52, sum[0...52]=1378, running on CPU=3, start=1726321671.966826, stop=1726321672.216023
+Sep 14 09:47:52 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=53, sum[0...53]=1431, running on CPU=3, start=1726321672.216166, stop=1726321672.521347
+Sep 14 09:47:52 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=54, sum[0...54]=1485, running on CPU=3, start=1726321672.521486, stop=1726321672.779069
+Sep 14 09:47:53 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=55, sum[0...55]=1540, running on CPU=3, start=1726321672.779217, stop=1726321673.041194
+Sep 14 09:47:53 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=56, sum[0...56]=1596, running on CPU=3, start=1726321673.041335, stop=1726321673.355869
+Sep 14 09:47:53 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=57, sum[0...57]=1653, running on CPU=3, start=1726321673.355997, stop=1726321673.627419
+Sep 14 09:47:53 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=58, sum[0...58]=1711, running on CPU=3, start=1726321673.627557, stop=1726321673.902866
+Sep 14 09:47:54 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=59, sum[0...59]=1770, running on CPU=3, start=1726321673.903020, stop=1726321674.182772
+Sep 14 09:47:54 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=60, sum[0...60]=1830, running on CPU=3, start=1726321674.182900, stop=1726321674.519237
+Sep 14 09:47:54 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=61, sum[0...61]=1891, running on CPU=3, start=1726321674.519382, stop=1726321674.808607
+Sep 14 09:47:55 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=62, sum[0...62]=1953, running on CPU=3, start=1726321674.808778, stop=1726321675.102193
+Sep 14 09:47:55 raspberrypi [COURSE:1][ASSIGNMENT:3]: Thread idx=63, sum[0...63]=2016, running on CPU=3, start=1726321675.102374, stop=1726321675.451577
+Sep 14 09:47:55 raspberrypi [COURSE:1][ASSIGNMENT:3]: TEST COMPLETE

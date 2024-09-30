@@ -203,6 +203,14 @@ static inline unsigned ccnt_read (void)
 }
 
 
+unsigned long long fibonacci(unsigned int n)
+{
+    if (n <= 1)
+        return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+
 
 void main(void)
 {
@@ -440,6 +448,7 @@ void *Service_1(void *threadp)
 {
     struct timespec current_time_val;
     double current_realtime;
+    double start_proc_realtime;
     unsigned long long S1Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
 
@@ -456,9 +465,13 @@ void *Service_1(void *threadp)
         S1Cnt++;
 
 	// DO WORK
+        clock_gettime(MY_CLOCK_TYPE, &current_time_val); start_proc_realtime=realtime(&current_time_val);  
+        fibonacci(30);
+        
 
 	// on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+        syslog(LOG_CRIT, "S1 50 Hz on core %d process time: sec=%6.9lf\n", sched_getcpu(), current_realtime-start_proc_realtime);
         syslog(LOG_CRIT, "S1 50 Hz on core %d for release %llu @ sec=%6.9lf\n", sched_getcpu(), S1Cnt, current_realtime-start_realtime);
     }
 
@@ -483,6 +496,7 @@ void *Service_2(void *threadp)
     {
         sem_wait(&semS2);
         S2Cnt++;
+        fibonacci(25);
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         syslog(LOG_CRIT, "S2 20 Hz on core %d for release %llu @ sec=%6.9lf\n", sched_getcpu(), S2Cnt, current_realtime-start_realtime);
@@ -507,6 +521,7 @@ void *Service_3(void *threadp)
     {
         sem_wait(&semS3);
         S3Cnt++;
+        fibonacci(25);
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         syslog(LOG_CRIT, "S3 10 Hz on core %d forrelease %llu @ sec=%6.9lf\n", sched_getcpu(), S3Cnt, current_realtime-start_realtime);

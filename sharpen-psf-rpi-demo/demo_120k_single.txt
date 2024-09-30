@@ -1,0 +1,2 @@
+Sep 13 14:26:15 raspberrypi sharpen: start test at 0.777938
+Sep 13 14:26:15 raspberrypi sharpen: stop test at 0.821891 for 10 frames

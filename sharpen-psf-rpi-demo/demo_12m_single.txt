@@ -1,0 +1,3 @@
+Sep 13 14:42:09 raspberrypi sharpen: start test at 77.382835
+Sep 13 14:42:14 raspberrypi sharpen: stop test at 82.313318 for 10 frames
+Sep 13 14:45:01 raspberrypi CRON[8815]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)

@@ -1,0 +1,20 @@
+Sep 13 14:47:17 raspberrypi sharpen_grid: source file Cactus-120kpixel.ppm read
+Sep 13 14:47:17 raspberrypi sharpen_grid: start test at 0.832468
+Sep 13 14:47:17 raspberrypi sharpen_grid: start test at 0.856223 for 10 frames
+Sep 13 14:47:17 raspberrypi sharpen_grid: starting sink file Cactus-120kpixel-sharpen.ppm write
+Sep 13 14:47:19 raspberrypi sharpen_grid: sink file Cactus-120kpixel-sharpen.ppm written
+Sep 13 14:47:31 raspberrypi sharpen_grid: source file Cactus-120kpixel.ppm read
+Sep 13 14:47:31 raspberrypi sharpen_grid: start test at 0.795057
+Sep 13 14:47:31 raspberrypi sharpen_grid: start test at 0.819095 for 10 frames
+Sep 13 14:47:31 raspberrypi sharpen_grid: starting sink file Cactus-120kpixel-sharpen.ppm write
+Sep 13 14:47:32 raspberrypi sharpen_grid: sink file Cactus-120kpixel-sharpen.ppm written
+Sep 13 14:47:43 raspberrypi sharpen_grid: source file Cactus-120kpixel.ppm read
+Sep 13 14:47:43 raspberrypi sharpen_grid: start test at 0.802197
+Sep 13 14:47:43 raspberrypi sharpen_grid: start test at 0.830717 for 10 frames
+Sep 13 14:47:43 raspberrypi sharpen_grid: starting sink file Cactus-120kpixel-sharpen.ppm write
+Sep 13 14:47:45 raspberrypi sharpen_grid: sink file Cactus-120kpixel-sharpen.ppm written
+Sep 13 14:47:52 raspberrypi sharpen_grid: source file Cactus-120kpixel.ppm read
+Sep 13 14:47:52 raspberrypi sharpen_grid: start test at 0.770920
+Sep 13 14:47:52 raspberrypi sharpen_grid: start test at 0.793369 for 10 frames
+Sep 13 14:47:52 raspberrypi sharpen_grid: starting sink file Cactus-120kpixel-sharpen.ppm write
+Sep 13 14:47:53 raspberrypi sharpen_grid: sink file Cactus-120kpixel-sharpen.ppm written

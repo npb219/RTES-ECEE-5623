@@ -166,7 +166,7 @@ static struct timespec delay_error = {0, 0};
 //#define MY_CLOCK CLOCK_MONOTONIC_COARSE
 
 //100 iters
-#define TEST_ITERATIONS (5)
+#define TEST_ITERATIONS (100)
 
 //sleep for test time at TeST_ITERATIONS and check error
 void *delay_test(void *threadID)

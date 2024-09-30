@@ -6,13 +6,14 @@
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
+#include <syslog.h>
 
 
-//#define IMG_HEIGHT (3000)
-//#define IMG_WIDTH (4000)
+#define IMG_HEIGHT (3000)
+#define IMG_WIDTH (4000)
 
-#define IMG_HEIGHT (300)
-#define IMG_WIDTH (400)
+// #define IMG_HEIGHT (300)
+// #define IMG_WIDTH (400)
 
 
 #define NUM_ROW_THREADS (3)
@@ -21,13 +22,14 @@
 //#define NUM_ROW_THREADS (6)
 //#define NUM_COL_THREADS (8)
 
-//#define NUM_ROW_THREADS (12)
-//#define NUM_COL_THREADS (16)
+// #define NUM_ROW_THREADS (12)
+// #define NUM_COL_THREADS (16)
 
 #define IMG_H_SLICE (IMG_HEIGHT/NUM_ROW_THREADS)
 #define IMG_W_SLICE (IMG_WIDTH/NUM_COL_THREADS)
 
-#define ITERATIONS (300)
+//#define ITERATIONS (300)
+#define ITERATIONS (10)
 
 typedef double FLOAT;
 
@@ -189,12 +191,14 @@ int main(int argc, char *argv[])
         }
     }
     printf("source file %s read\n", argv[1]);
+    syslog(LOG_CRIT,"source file %s read\n", argv[1]);
     close(fdin);
 
 
     clock_gettime(CLOCK_MONOTONIC, &now);
     fnow = (FLOAT)now.tv_sec + (FLOAT)now.tv_nsec / 1000000000.0;
     printf("start test at %lf\n", fnow - fstart);
+    syslog(LOG_CRIT,"start test at %lf\n", fnow - fstart);
 
     for(runs=0; runs < ITERATIONS; runs++)
     {
@@ -243,8 +247,10 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &now);
     fnow = (FLOAT)now.tv_sec + (FLOAT)now.tv_nsec / 1000000000.0;
     printf("start test at %lf for %d frames\n", fnow - fstart, runs);
+    syslog(LOG_CRIT,"start test at %lf for %d frames\n", fnow - fstart, runs);
 
     printf("starting sink file %s write\n", argv[2]);
+    syslog(LOG_CRIT,"starting sink file %s write\n", argv[2]);
     write(fdout, (void *)header, 21);
 
     // Write RGB data - very slow 1 byte at a time!
@@ -260,6 +266,7 @@ int main(int argc, char *argv[])
 
 
     printf("sink file %s written\n", argv[2]);
+    syslog(LOG_CRIT,"sink file %s written\n", argv[2]);
     close(fdout);
  
 }

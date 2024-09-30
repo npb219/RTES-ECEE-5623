@@ -1,0 +1,6 @@
+Sep 13 14:52:19 raspberrypi sharpen_grid: source file Cactus-12mpixel.ppm read
+Sep 13 14:52:19 raspberrypi sharpen_grid: start test at 76.904272
+Sep 13 14:52:21 raspberrypi sharpen_grid: start test at 78.090633 for 10 frames
+Sep 13 14:52:21 raspberrypi sharpen_grid: starting sink file Cactus-12mpixel-sharpen.ppm write
+Sep 13 14:54:55 raspberrypi sharpen_grid: sink file Cactus-12mpixel-sharpen.ppm written
+Sep 13 14:55:01 raspberrypi CRON[12001]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
