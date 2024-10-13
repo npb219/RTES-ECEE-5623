@@ -49,15 +49,17 @@
 // Sequencer - 100 Hz 
 //                   [gives semaphores to all other services]
 // Service_1 - 50   Hz, every other Sequencer loop
-// Service_2 - 10   Hz, every 10th Sequencer loop 
-// Service_3 - 6.67 Hz ,every 15th Sequencer loop
+// Service_2 - 20   Hz, every 5th Sequencer loop 
+// Service_3 - 10   Hz ,every 10th Sequencer loop
+// Service_4 - 5    Hz ,every 20th Sequencer loop
 //
 // With the above, priorities by RM policy would be:
 //
 // Sequencer = RT_MAX	@ 100   Hz
 // Servcie_1 = RT_MAX-1	@ 50    Hz
-// Service_2 = RT_MAX-2	@ 10    Hz
-// Service_3 = RT_MAX-3	@ 6.67  Hz
+// Service_2 = RT_MAX-2	@ 20    Hz
+// Service_3 = RT_MAX-3	@ 10    Hz
+// Service_4 = RT_MAX-3	@ 5     Hz
 //
 /////////////////////////////////////////////////////////////////////////////
 // JETSON SYSTEM NOTES:
@@ -119,7 +121,7 @@
 #define TRUE (1)
 #define FALSE (0)
 
-#define NUM_THREADS (3)
+#define NUM_THREADS (4)
 
 // Of the available user space clocks, CLOCK_MONONTONIC_RAW is typically most precise and not subject to 
 // updates from external timer adjustments
@@ -134,9 +136,9 @@
 
 //task aborts
 int abortTest=FALSE;
-int abortS1=FALSE, abortS2=FALSE, abortS3=FALSE;
+int abortS1=FALSE, abortS2=FALSE, abortS3=FALSE, abortS4=FALSE;
 //task semephores
-sem_t semS1, semS2, semS3;
+sem_t semS1, semS2, semS3, semS4;
 //timer vals
 struct timespec start_time_val;
 double start_realtime;
@@ -160,6 +162,7 @@ void Sequencer(int id);
 void *Service_1(void *threadp);
 void *Service_2(void *threadp);
 void *Service_3(void *threadp);
+void *Service_4(void *threadp);
 
 
 double getTimeMsec(void);
@@ -242,7 +245,7 @@ void main(int argc, char *argv[])
     // syslog(LOG_CRIT, "START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
 
     //start syslog
-    openlog ("[COURSE:2][ASSIGNMENT:1]", LOG_NDELAY, LOG_DAEMON); 
+    openlog ("[COURSE:2][ASSIGNMENT:3]", LOG_NDELAY, LOG_DAEMON); 
     syslog(LOG_CRIT, argv[1]);
 
    //timestamp = ccnt_read();
@@ -263,6 +266,7 @@ void main(int argc, char *argv[])
     if (sem_init (&semS1, 0, 0)) { syslog(LOG_CRIT, "Failed to initialize S1 semaphore\n"); exit (-1); }
     if (sem_init (&semS2, 0, 0)) { syslog(LOG_CRIT, "Failed to initialize S2 semaphore\n"); exit (-1); }
     if (sem_init (&semS3, 0, 0)) { syslog(LOG_CRIT, "Failed to initialize S3 semaphore\n"); exit (-1); }
+    if (sem_init (&semS4, 0, 0)) { syslog(LOG_CRIT, "Failed to initialize S4 semaphore\n"); exit (-1); }
 
     mainpid=getpid();
     //set priorities
@@ -348,6 +352,16 @@ void main(int argc, char *argv[])
     else
         syslog(LOG_CRIT, "pthread_create successful for service 3\n");
 
+    // Service_4 = RT_MAX-3	@ 5 Hz
+    //
+    rt_param[3].sched_priority=rt_max_prio-4;
+    pthread_attr_setschedparam(&rt_sched_attr[3], &rt_param[3]);
+    rc=pthread_create(&threads[3], &rt_sched_attr[3], Service_4, (void *)&(threadParams[3]));
+    if(rc < 0)
+        perror("pthread_create for service 4");
+    else
+        syslog(LOG_CRIT, "pthread_create successful for service 4\n");
+
 
     
 
@@ -362,7 +376,7 @@ void main(int argc, char *argv[])
  
     // Create Sequencer thread, which like a cyclic executive, is highest prio
     syslog(LOG_CRIT, "Start sequencer\n");
-    sequencePeriods=30;
+    sequencePeriods=20;
 
     // Sequencer = RT_MAX	@ 100 Hz
     //
@@ -422,12 +436,16 @@ void Sequencer(int id)
     // Servcie_1 = RT_MAX-1	@ 50 Hz
     if((seqCnt % 2) == 1) sem_post(&semS1);
 
-    // Servcie_2 = RT_MAX-2	@ 10 Hz
-    if((seqCnt % 10) == 1) sem_post(&semS2);
+    // Servcie_2 = RT_MAX-2	@ 20 Hz
+    if((seqCnt % 5) == 1) sem_post(&semS2);
 
-    // Servcie_3 = RT_MAX-3	@ 6.67 Hz
-    if((seqCnt % 15) == 1 ) sem_post(&semS3);
-    if((seqCnt % 15) == 1 ) sem_post(&semS3);
+    // Servcie_3 = RT_MAX-3	@ 10 Hz
+    if((seqCnt % 10) == 1 ) sem_post(&semS3);
+    if((seqCnt % 10) == 1 ) sem_post(&semS3);
+
+    // Servcie_4 = RT_MAX-3	@ 5 Hz
+    if((seqCnt % 20) == 1 ) sem_post(&semS4);
+    if((seqCnt % 20) == 1 ) sem_post(&semS4);
 
 
 
@@ -444,9 +462,9 @@ void Sequencer(int id)
 	//syslog(LOG_CRIT, "Disabling sequencer interval timer with abort=%d and %llu of %lld\n", abortTest, seqCnt, sequencePeriods);
 
 	// shutdown all services
-        sem_post(&semS1); sem_post(&semS2); sem_post(&semS3);
+        sem_post(&semS1); sem_post(&semS2); sem_post(&semS3); sem_post(&semS4);
 
-        abortS1=TRUE; abortS2=TRUE; abortS3=TRUE;
+        abortS1=TRUE; abortS2=TRUE; abortS3=TRUE; abortS4=TRUE;
     }
 
 }
@@ -552,6 +570,35 @@ void *Service_3(void *threadp)
         syslog(LOG_CRIT, "Thread 3 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
         //syslog(LOG_CRIT, "S3 50 Hz on core %d process time: sec=%6.9lf\n", sched_getcpu(), current_realtime-start_proc_realtime);
 
+    }
+
+    pthread_exit((void *)0);
+}
+
+void *Service_4(void *threadp)
+{
+    struct timespec current_time_val;
+    double current_realtime;
+    unsigned long long S4Cnt=0;
+    threadParams_t *threadParams = (threadParams_t *)threadp;
+    double start_proc_realtime;
+    struct timespec delay_time={0,20000000};
+    struct timespec remaining_time={0,20000000};
+
+    clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+    printf("S4 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
+
+    while(!abortS4)
+    {
+        sem_wait(&semS4);
+        S4Cnt++;
+        clock_gettime(MY_CLOCK_TYPE, &current_time_val); start_proc_realtime=realtime(&current_time_val); 
+        fibonacci(29);
+        //nanosleep(&delay_time, &remaining_time);
+
+        clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+        syslog(LOG_CRIT, "Thread 4 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        
     }
 
     pthread_exit((void *)0);

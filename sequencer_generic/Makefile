@@ -12,11 +12,20 @@ CFILES= seqgenex0.c seqgen.c seqgen2.c seqgen3.c seqv4l2.c capturelib.c
 SRCS= ${HFILES} ${CFILES}
 OBJS= ${CFILES:.c=.o}
 
-all:	seqgenex0 seqgen seqgen2 seqgen3 seqv4l2 clock_times capture
+all:	seqgenex0 seqgen seqgen2 seqgen3 seqv4l2 clock_times capture assignment_2_1 assignment_2_2 assignment_2_3
 
 clean:
 	-rm -f *.o *.d frames/*.pgm frames/*.ppm
-	-rm -f seqgenex0 seqgen seqgen2 seqgen3 seqv4l2 clock_times capture
+	-rm -f seqgenex0 seqgen seqgen2 seqgen3 seqv4l2 clock_times capture assignment_2_1 assignment_2_2 assignment_2_3
+
+assignment_2_1: assignment_2_1.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o -lpthread -lrt
+
+assignment_2_2: assignment_2_2.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o -lpthread -lrt
+
+assignment_2_3: assignment_2_3.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o -lpthread -lrt
 
 seqgenex0: seqgenex0.o
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o -lpthread -lrt

@@ -49,14 +49,14 @@
 // Sequencer - 100 Hz 
 //                   [gives semaphores to all other services]
 // Service_1 - 50   Hz, every other Sequencer loop
-// Service_2 - 10   Hz, every 10th Sequencer loop 
+// Service_2 - 20   Hz, every 5th Sequencer loop 
 // Service_3 - 6.67 Hz ,every 15th Sequencer loop
 //
 // With the above, priorities by RM policy would be:
 //
 // Sequencer = RT_MAX	@ 100   Hz
 // Servcie_1 = RT_MAX-1	@ 50    Hz
-// Service_2 = RT_MAX-2	@ 10    Hz
+// Service_2 = RT_MAX-2	@ 20    Hz
 // Service_3 = RT_MAX-3	@ 6.67  Hz
 //
 /////////////////////////////////////////////////////////////////////////////
@@ -242,7 +242,7 @@ void main(int argc, char *argv[])
     // syslog(LOG_CRIT, "START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
 
     //start syslog
-    openlog ("[COURSE:2][ASSIGNMENT:1]", LOG_NDELAY, LOG_DAEMON); 
+    openlog ("[COURSE:2][ASSIGNMENT:2]", LOG_NDELAY, LOG_DAEMON); 
     syslog(LOG_CRIT, argv[1]);
 
    //timestamp = ccnt_read();
@@ -338,7 +338,7 @@ void main(int argc, char *argv[])
         syslog(LOG_CRIT, "pthread_create successful for service 2\n");
 
 
-    // Service_3 = RT_MAX-3	@ 10 Hz
+    // Service_3 = RT_MAX-3	@ 6.67 Hz
     //
     rt_param[2].sched_priority=rt_max_prio-3;
     pthread_attr_setschedparam(&rt_sched_attr[2], &rt_param[2]);
@@ -422,8 +422,8 @@ void Sequencer(int id)
     // Servcie_1 = RT_MAX-1	@ 50 Hz
     if((seqCnt % 2) == 1) sem_post(&semS1);
 
-    // Servcie_2 = RT_MAX-2	@ 10 Hz
-    if((seqCnt % 10) == 1) sem_post(&semS2);
+    // Servcie_2 = RT_MAX-2	@ 20 Hz
+    if((seqCnt % 5) == 1) sem_post(&semS2);
 
     // Servcie_3 = RT_MAX-3	@ 6.67 Hz
     if((seqCnt % 15) == 1 ) sem_post(&semS3);

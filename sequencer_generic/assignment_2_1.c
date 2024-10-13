@@ -142,6 +142,7 @@ struct timespec start_time_val;
 double start_realtime;
 unsigned long long sequencePeriods;
 
+//scheduler timer variables
 static timer_t timer_1;
 static struct itimerspec itime = {{1,0}, {1,0}};
 static struct itimerspec last_itime;
@@ -155,13 +156,14 @@ typedef struct
 } threadParams_t;
 
 
+//sequencer and services
 void Sequencer(int id);
 
 void *Service_1(void *threadp);
 void *Service_2(void *threadp);
 void *Service_3(void *threadp);
 
-
+//function declerations
 double getTimeMsec(void);
 double realtime(struct timespec *tsptr);
 void print_scheduler(void);
@@ -202,7 +204,7 @@ static inline unsigned ccnt_read (void)
     return cc;
 }
 
-
+//fib calculator
 unsigned long long fibonacci(unsigned int n)
 {
     if (n <= 1)
@@ -233,29 +235,17 @@ void main(int argc, char *argv[])
 
     pthread_attr_t main_attr;
     pid_t mainpid;
-    //print start time + info
-    //syslog(LOG_CRIT, "Starting High Rate Sequencer Demo\n");
-    // clock_gettime(MY_CLOCK_TYPE, &start_time_val); start_realtime=realtime(&start_time_val);
-    // clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    // clock_getres(MY_CLOCK_TYPE, &current_time_res); current_realtime_res=realtime(&current_time_res);
-    // printf("START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
-    // syslog(LOG_CRIT, "START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
 
     //start syslog
     openlog ("[COURSE:2][ASSIGNMENT:1]", LOG_NDELAY, LOG_DAEMON); 
     syslog(LOG_CRIT, argv[1]);
 
-   //timestamp = ccnt_read();
-   //printf("timestamp=%u\n", timestamp);
-
-   //syslog(LOG_CRIT, "System has %d processors configured and %d available.\n", get_nprocs_conf(), get_nprocs());
-
+   
+    //reset cpu assignment
    CPU_ZERO(&allcpuset);
     //get cpu avail
    for(i=0; i < NUM_CPU_CORES; i++)
        CPU_SET(i, &allcpuset);
-
-   //syslog(LOG_CRIT, "Using CPUS=%d from total available.\n", CPU_COUNT(&allcpuset));
 
 
     // initialize the sequencer semaphores
@@ -338,7 +328,7 @@ void main(int argc, char *argv[])
         syslog(LOG_CRIT, "pthread_create successful for service 2\n");
 
 
-    // Service_3 = RT_MAX-3	@ 10 Hz
+    // Service_3 = RT_MAX-3	@ 6.67 Hz
     //
     rt_param[2].sched_priority=rt_max_prio-3;
     pthread_attr_setschedparam(&rt_sched_attr[2], &rt_param[2]);
@@ -412,10 +402,7 @@ void Sequencer(int id)
            
     seqCnt++;
 
-    // clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    // printf("Sequencer on core %d for cycle %llu @ sec=%6.9lf\n", sched_getcpu(), seqCnt, current_realtime-start_realtime);
-    // syslog(LOG_CRIT, "Sequencer on core %d for cycle %llu @ sec=%6.9lf\n", sched_getcpu(), seqCnt, current_realtime-start_realtime);
-
+    
 
     // Release each service at a sub-rate of the generic sequencer rate
 
