@@ -5,6 +5,7 @@
         "errno.h": "c",
         "unistd.h": "c",
         "types.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "mqueue.h": "c"
     }
 }
