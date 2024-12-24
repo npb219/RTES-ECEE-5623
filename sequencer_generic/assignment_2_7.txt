@@ -1,0 +1,32 @@
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023 aarch64 GNU/Linux
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Pthread Policy is SCHED_FIFO
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: PTHREAD SCOPE PROCESS
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: rt_max_prio=99
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: rt_min_prio=1
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Service threads will run on 1 CPU cores
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: pthread_create successful for service 1
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: pthread_create successful for service 2
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: pthread_create successful for service 3
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Start sequencer
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.019264703> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.028618703> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.038070611> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.049245074> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.056590277> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.065894740> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.079226389> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.088495240> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.097810037> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.109248907> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.112191037> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.121429759> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.139200592> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.148460351> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.157776666> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.158530777> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.169294018> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.177122259> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 1 start 0 @ <0.189278166> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 2 start 1 @ <0.199037314> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: Thread 3 start 2 @ <0.208375500> on core <3>
+Oct 28 09:25:54 raspberrypi [COURSE:2][ASSIGNMENT:7]: TEST COMPLETE

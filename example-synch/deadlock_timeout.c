@@ -39,9 +39,9 @@ void *grabRsrcs(void *threadp)
 
    clock_gettime(CLOCK_REALTIME, &timeNow);
 
-   rsrcA_timeout.tv_sec = timeNow.tv_sec + 2;
+   rsrcA_timeout.tv_sec = timeNow.tv_sec + 5;
    rsrcA_timeout.tv_nsec = timeNow.tv_nsec;
-   rsrcB_timeout.tv_sec = timeNow.tv_sec + 3;
+   rsrcB_timeout.tv_sec = timeNow.tv_sec + 6;
    rsrcB_timeout.tv_nsec = timeNow.tv_nsec;
 
 
@@ -65,7 +65,7 @@ void *grabRsrcs(void *threadp)
      if(!noWait) usleep(1000000);
 
      clock_gettime(CLOCK_REALTIME, &timeNow);
-     rsrcB_timeout.tv_sec = timeNow.tv_sec + 3;
+     rsrcB_timeout.tv_sec = timeNow.tv_sec + 6;
      rsrcB_timeout.tv_nsec = timeNow.tv_nsec;
 
      printf("THREAD 1 got A, trying for B @ %d sec and %d nsec\n", (int)timeNow.tv_sec, (int)timeNow.tv_nsec);
@@ -94,6 +94,8 @@ void *grabRsrcs(void *threadp)
          pthread_exit(NULL);
      }
 
+     usleep(1000000);
+
      printf("THREAD 1 got A and B\n");
      rsrcBCnt--;
      pthread_mutex_unlock(&rsrcB);
@@ -105,8 +107,8 @@ void *grabRsrcs(void *threadp)
    else
    {
      printf("THREAD 2 grabbing resource B @ %d sec and %d nsec\n", (int)timeNow.tv_sec, (int)timeNow.tv_nsec);
-     //if((rc=pthread_mutex_timedlock(&rsrcB, &rsrcB_timeout)) != 0)
-     if((rc=pthread_mutex_lock(&rsrcB)) != 0)
+     if((rc=pthread_mutex_timedlock(&rsrcB, &rsrcB_timeout)) != 0)
+     //if((rc=pthread_mutex_lock(&rsrcB)) != 0)
      {
          printf("Thread 2 ERROR\n");
          pthread_exit(NULL);
@@ -122,7 +124,7 @@ void *grabRsrcs(void *threadp)
      if(!noWait) usleep(1000000);
 
      clock_gettime(CLOCK_REALTIME, &timeNow);
-     rsrcA_timeout.tv_sec = timeNow.tv_sec + 2;
+     rsrcA_timeout.tv_sec = timeNow.tv_sec + 5;
      rsrcA_timeout.tv_nsec = timeNow.tv_nsec;
 
      printf("THREAD 2 got B, trying for A @ %d sec and %d nsec\n", (int)timeNow.tv_sec, (int)timeNow.tv_nsec);
@@ -207,19 +209,20 @@ int main (int argc, char *argv[])
    if (rc) {printf("ERROR; pthread_create() rc is %d\n", rc); perror(NULL); exit(-1);}
 
    printf("will try to join both CS threads unless they deadlock\n");
+pthread_join(threads[0], NULL);
+pthread_join(threads[1], NULL);
+  //  if(!safe)
+  //  {
+  //    if(pthread_join(threads[0], NULL) == 0)
+  //      printf("Thread 1 joined to main\n");
+  //    else
+  //      perror("Thread 1");
+  //  }
 
-   if(!safe)
-   {
-     if(pthread_join(threads[0], NULL) == 0)
-       printf("Thread 1 joined to main\n");
-     else
-       perror("Thread 1");
-   }
-
-   if(pthread_join(threads[1], NULL) == 0)
-     printf("Thread 2 joined to main\n");
-   else
-     perror("Thread 2");
+  //  if(pthread_join(threads[1], NULL) == 0)
+  //    printf("Thread 2 joined to main\n");
+  //  else
+  //    perror("Thread 2");
 
    if(pthread_mutex_destroy(&rsrcA) != 0)
      perror("mutex A destroy");

@@ -14,8 +14,10 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <sched.h>
-#include <time.h>
+//#include <time.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 #define NUM_THREADS		4
 #define START_SERVICE 		0
@@ -136,7 +138,8 @@ int main (int argc, char *argv[])
 
    // standard Linux MUTEX semaphore
    pthread_mutex_init(&sharedMemSem, NULL);
-   rc=pthread_mutexattr_getprotocol(&sharedMemSemAttr, &semProtocol);
+   
+   //rc=pthread_mutexattr_getprotocol(&sharedMemSemAttr, &semProtocol);
 
    if(semProtocol == PTHREAD_PRIO_NONE) printf("PTHREAD_PRIO_NONE\n");
    else if(semProtocol == PTHREAD_PRIO_INHERIT) printf("PTHREAD_PRIO_INHERIT\n");
@@ -145,6 +148,8 @@ int main (int argc, char *argv[])
 
    //rc=pthread_mutexattr_setprotocol(&sharedMemSemAttr, PTHREAD_PRIO_PROTECT);
    rc=pthread_mutexattr_setprotocol(&sharedMemSemAttr, PTHREAD_PRIO_INHERIT);
+
+  //pthread_mutex_init(&sharedMemSem, &sharedMemSemAttr);
 
    if (rc)
    {
@@ -211,8 +216,8 @@ void *startService(void *threadid)
 
    printf("\nCreating BE thread %d\n", LOW_PRIO_SERVICE);
    threadParams[LOW_PRIO_SERVICE].threadIdx=LOW_PRIO_SERVICE;
-   rc = pthread_create(&threads[LOW_PRIO_SERVICE], &nrt_sched_attr, simpleTask, (void *)&threadParams[LOW_PRIO_SERVICE]);
-   //rc = pthread_create(&threads[LOW_PRIO_SERVICE], &nrt_sched_attr, criticalSectionTask, (void *)&threadParams[LOW_PRIO_SERVICE]);
+   //rc = pthread_create(&threads[LOW_PRIO_SERVICE], &nrt_sched_attr, simpleTask, (void *)&threadParams[LOW_PRIO_SERVICE]);
+   rc = pthread_create(&threads[LOW_PRIO_SERVICE], &nrt_sched_attr, criticalSectionTask, (void *)&threadParams[LOW_PRIO_SERVICE]);
 
    if (rc)
    {
