@@ -1,5 +1,5 @@
 /*
- *
+ * assignment_3_1
  *  Adapted from capturelib.c, seqv4lc.c and heap_mq.c by Sam Siewert for use with UVC web cameras and Bt878 frame
  *  grabber NTSC cameras to acquire digital video from a source,
  *  time-stamp each frame acquired, save to a PGM or PPM file.
