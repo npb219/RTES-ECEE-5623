@@ -1,142 +1,165 @@
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
+#include <arpa/inet.h>
 #include <stdio.h>
-#include <signal.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <unistd.h>
+#include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <signal.h>
 
-#define NSTRS 3
 #define DEFAULT_PORT 54321
-
-char *test_strs[NSTRS] = {
-	"This is the first server string.\n",
-	"This is the second server string.\n",
-	"This is the third server string.\n"
-};
+#define MAX 80 
 
 extern int errno;
 extern void int_handler();
 extern void broken_pipe_handler();
 extern void serve_clients();
 
-static int server_sock, client_sock;
-static int fromlen, i, j, num_sets;
-static char c;
-static FILE *fp;
+int byte_count = 0 ;
+static int server_sock, client_sock, fromlen;
 static struct sockaddr_in server_sockaddr, client_sockaddr;
+char sendBuff[1025];
 
-main()
+char *filename = "test_file.txt";
+
+int main(void)
 {
-  char hostname[64];
-  struct hostent *hp;
-  struct linger opt;
-  int sockarg;
+    char hostname[64];
+    struct hostent *hp;
+    struct linger opt;
+    int sockarg;
 
-  gethostname(hostname, sizeof(hostname));
+    //get hostname
+    gethostname(hostname, sizeof(hostname));
 
-  if((hp = (struct hostent*) gethostbyname(hostname)) == NULL)
-  {
-    fprintf(stderr, "Error: %s host unknown.\n", hostname);
-    exit(-1);
-  }
+    if((hp = (struct hostent*) gethostbyname(hostname)) == NULL)
+    {
+        fprintf(stderr, "Error: %s host unknown.\n", hostname);
+        exit(-1);
+    }
 
-  if((server_sock=socket(AF_INET, SOCK_STREAM, 0)) < 0)
-  {
-    perror("Server: socket");
-    exit(-1);
-  }
+    if((server_sock=socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        perror("Server: socket");
+        exit(-1);
+    }
+    
+    //get socket
+    server_sock = socket(AF_INET, SOCK_STREAM, 0);
 
-  bzero((char*) &server_sockaddr, sizeof(server_sockaddr));
-  server_sockaddr.sin_family = AF_INET;
-  server_sockaddr.sin_port = htons(DEFAULT_PORT);
-  bcopy (hp->h_addr, &server_sockaddr.sin_addr, hp->h_length);
+    //printf("Socket retrieve success\n");
 
-  /* Bind address to the socket */
-  if(bind(server_sock, (struct sockaddr *) &server_sockaddr,
-     sizeof(server_sockaddr)) < 0) 
-  {
-    perror("Server: bind");
-    exit(-1);
-  }
+    memset(&server_sockaddr, '0', sizeof(server_sockaddr));
+    memset(sendBuff, '0', sizeof(sendBuff));
+    //addr info
+    server_sockaddr.sin_family = AF_INET;
+    server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_sockaddr.sin_port = htons(DEFAULT_PORT);
 
-  /* turn on zero linger time so that undelivered data is discarded when
+    /* Bind address to the socket */
+    if(bind(server_sock, (struct sockaddr *) &server_sockaddr, sizeof(server_sockaddr)) < 0) 
+    {
+        perror("Server: bind");
+        exit(-1);
+    }
+
+    /* turn on zero linger time so that undelivered data is discarded when
      socket is closed
-   */
-  opt.l_onoff = 1;
-  opt.l_linger = 0;
+    */
+    opt.l_onoff = 1;
+    opt.l_linger = 0;
 
-  sockarg = 1;
- 
-  setsockopt(server_sock, SOL_SOCKET, SO_LINGER, (char*) &opt, sizeof(opt));
-  setsockopt(client_sock, SOL_SOCKET, SO_REUSEADDR, (char *)&sockarg, sizeof(int));
-  signal(SIGINT, int_handler);
-  signal(SIGPIPE, broken_pipe_handler);
+    sockarg = 1;
 
-  serve_clients();
+    setsockopt(server_sock, SOL_SOCKET, SO_LINGER, (char*) &opt, sizeof(opt));
+    setsockopt(client_sock, SOL_SOCKET, SO_REUSEADDR, (char *)&sockarg, sizeof(int));
+    signal(SIGINT, int_handler);
+    signal(SIGPIPE, broken_pipe_handler);
 
-}
+    serve_clients();
 
+    return 0;
+}   
 
 /* Listen and accept loop function */
 void serve_clients()
 {
-
-  for(;;)
-  {
-
-    /* Listen on the socket */
-    if(listen(server_sock, 5) < 0)
-    {
-      perror("Server: listen");
-      exit(-1);
-    }
-
-    /* Accept connections */
-    if((client_sock=accept(server_sock, 
-                           (struct sockaddr *)&client_sockaddr,
-                           &fromlen)) < 0) 
-    {
-      perror("Server: accept");
-      exit(-1);
-    }
-
-    fp = fdopen(client_sock, "r");
-
-    recv(client_sock, (char *)&num_sets, sizeof(int), 0);
-    printf("number of sets = %d\n", num_sets);
-
-    for(j=0;j<num_sets;j++)
+    char buff[MAX];
+    /* Read data from file and send it */
+    while(1)
     {
 
-      /* Send strings to the client */
-      for (i=0; i<NSTRS; i++)
-        send(client_sock, test_strs[i], strlen(test_strs[i]), 0);
-
-      /* Read client strings and print them out */
-      for (i=0; i<NSTRS; i++)
-      {
-        while((c = fgetc(fp)) != EOF)
+        /* Listen on the socket */
+        if(listen(server_sock, 5) < 0)
         {
-	  if(num_sets < 4)
-            putchar(c);
+        perror("Server: listen");
+        exit(-1);
+        }
 
-          if(c=='\n')
-            break;
-        } /* end while */
+        /* Accept connections */
+        if((client_sock=accept(server_sock, 
+                            (struct sockaddr *)&client_sockaddr,
+                            &fromlen)) < 0) 
+        {
+        perror("Server: accept");
+        exit(-1);
+        }
+        //connection open now
+        
+         
+        bzero(buff, MAX); 
+        // read the message from client and copy it in buffer 
+        read(client_sock, buff, sizeof(buff)); 
+        // print file to download
+        printf("requested file: %s\n ", buff); 
 
-      } /* end for NSTRS */
+        /* Open the file that we wish to transfer */
+        FILE *fp = fopen(buff,"rb");
+        if(fp==NULL)
+        {
+            fprintf(stderr, "%s", "File open error\n");    
+            exit(-1); 
+        }   
 
-    } /* end for num_sets */
+    
+        /* First read file in chunks of 256 bytes */
+        unsigned char buff[256]={0};
+        int nread = fread(buff,1,256,fp);
+        byte_count +=nread;
 
-    close(client_sock);
+        //  printf("Bytes read %d \n", nread);        
 
-  } /* end for ever */
+        /* If read was success, send data. */
+        if(nread > 0)
+        {
+            // printf("Sending \n");
+            write(client_sock, buff, nread);
+        }
+
+
+        if (nread < 256)
+        {
+            printf("TransferDone: %d bytes\n" ,byte_count);
+            if (feof(fp))
+            {
+                printf("End of file\n");
+            }
+
+            if (ferror(fp))
+            {
+                printf("Error reading\n");
+                break;
+            }
+        }
+
+        close(client_sock);
+        sleep(1);
+
+    } /* end for ever */
 
 }
-
 
 /* Close sockets after a Ctrl-C interrupt */
 

@@ -19,7 +19,7 @@ LDFLAGS =
 
 LIBS = -lm
 
-all: serial_test inet_client inet_server
+all: serial_test inet_client inet_server test_server
 
 inet_clent: inet_clent.o
 	$(CC) $(LDFLAGS) $(LIBS) $^ -o $@
