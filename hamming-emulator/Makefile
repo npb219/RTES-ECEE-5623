@@ -9,21 +9,26 @@ CFLAGS= -O0 -g $(INCLUDE_DIRS) $(CDEFS)
 LIBS=
 
 DRIVER=ecctest
+ASSIGNMENT = assignment_3_3
 
 HFILES= ecclib.h
-CFILES= ecctest.c ecclib.c
+CFILES= ecctest.c ecclib.c assignment_3_3.c
 
 SRCS= ${HFILES} ${CFILES}
-OBJS= ${CFILES:.c=.o}
+DRIVER_OBJS = ecctest.o ecclib.o
+ASSIGNMENT_OBJS = assignment_3_3.o ecclib.o
 
-all:	${DRIVER}
+all:	${DRIVER} ${ASSIGNMENT}
 
 clean:
 	-rm -f *.o *.NEW *~ gmon.out
-	-rm -f ${DRIVER} ${DERIVED} ${GARBAGE}
+	-rm -f ${DRIVER} ${ASSIGNMENT} ${DERIVED} ${GARBAGE}
 
-${DRIVER}:	${OBJS}
-	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
+${ASSIGNMENT}:	${ASSIGNMENT_OBJS}
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(ASSIGNMENT_OBJS) $(LIBS)
+
+${DRIVER}:	${DRIVER_OBJS}
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(DRIVER_OBJS) $(LIBS)
 
 depend:
 

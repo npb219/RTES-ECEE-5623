@@ -1,15 +1,40 @@
 #include "ecclib.h"
+#include <stdio.h>
+#include <stdarg.h>  // For va_list, va_start, va_end
 
 static int printTrace=0;
+static FILE *tracefile;
 
 void traceOn(void)
 {
     printTrace=1;
+    tracefile = fopen("tracefile.txt", "w");
 }
 
 void traceOff(void)
 {
     printTrace=0;
+}
+
+// write a trace to the file
+void write_trace(const char *format, ...) {
+    if (tracefile != NULL) {
+        va_list args;
+        va_start(args, format);  // Initialize the va_list with the last known fixed argument
+
+        vfprintf(tracefile, format, args);  // Write the formatted string to the file
+
+        va_end(args);  // Clean up the va_list
+    } else {
+        printf("File not opened!\n");
+    }
+}
+
+// close the file when done
+void close_file() {
+    if (tracefile != NULL) {
+        fclose(tracefile);  // Close the file
+    }
 }
 
 int write_byte(ecc_t *ecc, unsigned char *address, unsigned char byteToWrite) {
@@ -20,11 +45,11 @@ int write_byte(ecc_t *ecc, unsigned char *address, unsigned char byteToWrite) {
     codeword = get_codeword(ecc, offset);
     ecc->code_memory[offset] = codeword;
 
-    if(printTrace) { printf("WRITE : COMPUTED PARITY = ");print_code(codeword); }
-    if(printTrace) { printf("WRITE : PARITY          = ");print_code_word(ecc, address); }
-    if(printTrace) { printf("WRITE : DATA            = ");print_data_word(ecc, address); }
-    if(printTrace) { printf("WRITE : ECODED          = ");print_encoded(ecc, address); }
-    if(printTrace) { printf("\n"); }
+    if(printTrace) { write_trace("WRITE : COMPUTED PARITY = ");print_code(codeword); }
+    if(printTrace) { write_trace("WRITE : PARITY          = ");print_code_word(ecc, address); }
+    if(printTrace) { write_trace("WRITE : DATA            = ");print_data_word(ecc, address); }
+    if(printTrace) { write_trace("WRITE : ECODED          = ");print_encoded(ecc, address); }
+    if(printTrace) { write_trace("\n"); }
     
 
     return NO_ERROR;
@@ -58,14 +83,14 @@ int read_byte(ecc_t *ecc, unsigned char *address, unsigned char *byteRead) {
                         ) );
 
 
-    if(printTrace) { printf("READ  : COMPUTED PARITY = ");print_code(codeword); }
-    if(printTrace) { printf("READ  : PARITY          = ");print_code_word(ecc, address); }
-    if(printTrace) { printf("READ  : DATA            = ");print_data_word(ecc, address); }
-    if(printTrace) { printf("READ  : ECODED          = ");print_encoded(ecc, address); }
-    if(printTrace) { printf("READ  : SYNDROME        = ");print_code(SYNDROME); }
-    if(printTrace) { printf("READ  : PW              = ");print_code(pW); }
-    if(printTrace) { printf("READ  : PW2             = ");print_code(pW2); }
-    if(printTrace) { printf("\n"); }
+    if(printTrace) { write_trace("READ  : COMPUTED PARITY = ");print_code(codeword); }
+    if(printTrace) { write_trace("READ  : PARITY          = ");print_code_word(ecc, address); }
+    if(printTrace) { write_trace("READ  : DATA            = ");print_data_word(ecc, address); }
+    if(printTrace) { write_trace("READ  : ECODED          = ");print_encoded(ecc, address); }
+    if(printTrace) { write_trace("READ  : SYNDROME        = ");print_code(SYNDROME); }
+    if(printTrace) { write_trace("READ  : PW              = ");print_code(pW); }
+    if(printTrace) { write_trace("READ  : PW2             = ");print_code(pW2); }
+    if(printTrace) { write_trace("\n"); }
     
     // 1) if SYNDROME ==0 and pW == pW2, return NO_ERROR
     if((SYNDROME == 0) && (pW == pW2))
@@ -77,7 +102,7 @@ int read_byte(ecc_t *ecc, unsigned char *address, unsigned char *byteRead) {
         if((SYNDROME == 0) && (pW != pW2))
     {
         // restore pW to PW2
-        printf("PW ERROR\n\n");
+        write_trace("PW ERROR\n\n");
         ecc->code_memory[offset] |= pW2 & PW_BIT;
         return PW_ERROR;
     }
@@ -85,14 +110,14 @@ int read_byte(ecc_t *ecc, unsigned char *address, unsigned char *byteRead) {
     // 3) if SYNDROME !=0 and pW == pW2, return DOUBLE_BIT_ERROR
     if((SYNDROME != 0) && (pW == pW2))
     {
-        printf("DOUBLE BIT ERROR\n\n");
+        write_trace("DOUBLE BIT ERROR\n\n");
         return DOUBLE_BIT_ERROR;
     }
 
     // 4) if SYNDROME !=0 and pW != pW2, SBE, return SYNDROME
     if((SYNDROME != 0) && (pW != pW2))
     {
-        printf("SBE @ %d\n\n", SYNDROME);
+        write_trace("SBE @ %d\n\n", SYNDROME);
         return SYNDROME;
     }
 
@@ -113,7 +138,7 @@ unsigned char get_codeword(ecc_t *ecc, unsigned int offset)
 
     unsigned char codeword=0;
 
-    //printf("CODEWORD offset=%d\n", offset);
+    //write_trace("CODEWORD offset=%d\n", offset);
 
     // p01 - per spreadsheet model, compute even parity=0 over 7,5,4,3,2,1 bits
     codeword |= (P01_BIT & (
@@ -181,16 +206,16 @@ void print_code_word(ecc_t *ecc, unsigned char *address) {
     unsigned int offset = address - ecc->data_memory;
     unsigned char codeword = ecc->code_memory[offset];
 
-    printf("addr=%p (offset=%d) ", address, offset);
-    if(codeword & PW_BIT) printf("1"); else printf("0");
-    if(codeword & P01_BIT) printf("1"); else printf("0");
-    if(codeword & P02_BIT) printf("1"); else printf("0");
-    printf("_");
-    if(codeword & P03_BIT) printf("1"); else printf("0");
-    printf("___");
-    if(codeword & P04_BIT) printf("1"); else printf("0");
-    printf("____");
-    printf("\n");
+    write_trace("addr=%p (offset=%d) ", address, offset);
+    if(codeword & PW_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P01_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P02_BIT) write_trace("1"); else write_trace("0");
+    write_trace("_");
+    if(codeword & P03_BIT) write_trace("1"); else write_trace("0");
+    write_trace("___");
+    if(codeword & P04_BIT) write_trace("1"); else write_trace("0");
+    write_trace("____");
+    write_trace("\n");
 }
 
 
@@ -199,33 +224,33 @@ void print_data_word(ecc_t *ecc, unsigned char *address)
     unsigned int offset = address - ecc->data_memory;
     unsigned char dataword = ecc->data_memory[offset];
 
-    printf("addr=%p (offset=%d) ", address, offset);
+    write_trace("addr=%p (offset=%d) ", address, offset);
 
-    printf("___");
-    if(dataword & DATA_BIT_1) printf("1"); else printf("0");
-    printf("_");
-    if(dataword & DATA_BIT_2) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_3) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_4) printf("1"); else printf("0");
-    printf("_");
-    if(dataword & DATA_BIT_5) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_6) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_7) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_8) printf("1"); else printf("0");
+    write_trace("___");
+    if(dataword & DATA_BIT_1) write_trace("1"); else write_trace("0");
+    write_trace("_");
+    if(dataword & DATA_BIT_2) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_3) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_4) write_trace("1"); else write_trace("0");
+    write_trace("_");
+    if(dataword & DATA_BIT_5) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_6) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_7) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_8) write_trace("1"); else write_trace("0");
 
-    printf("    => ");
-    if(dataword & DATA_BIT_8) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_7) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_6) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_5) printf("1"); else printf("0");
-    printf(" ");
-    if(dataword & DATA_BIT_4) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_3) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_2) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_1) printf("1"); else printf("0");
-    printf(" [0x%02X]", dataword);
+    write_trace("    => ");
+    if(dataword & DATA_BIT_8) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_7) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_6) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_5) write_trace("1"); else write_trace("0");
+    write_trace(" ");
+    if(dataword & DATA_BIT_4) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_3) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_2) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_1) write_trace("1"); else write_trace("0");
+    write_trace(" [0x%02X]", dataword);
 
-    printf("\n");
+    write_trace("\n");
 }
 
 
@@ -235,33 +260,33 @@ void print_encoded(ecc_t *ecc, unsigned char *address)
     unsigned char codeword = ecc->code_memory[offset];
     unsigned char dataword = ecc->data_memory[offset];
 
-    printf("addr=%p (offset=%d) ", address, offset);
+    write_trace("addr=%p (offset=%d) ", address, offset);
 
-    if(codeword & PW_BIT) printf("1"); else printf("0");
-    if(codeword & P01_BIT) printf("1"); else printf("0");
-    if(codeword & P02_BIT) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_1) printf("1"); else printf("0");
-    if(codeword & P03_BIT) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_2) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_3) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_4) printf("1"); else printf("0");
-    if(codeword & P04_BIT) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_5) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_6) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_7) printf("1"); else printf("0");
-    if(dataword & DATA_BIT_8) printf("1"); else printf("0");
+    if(codeword & PW_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P01_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P02_BIT) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_1) write_trace("1"); else write_trace("0");
+    if(codeword & P03_BIT) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_2) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_3) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_4) write_trace("1"); else write_trace("0");
+    if(codeword & P04_BIT) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_5) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_6) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_7) write_trace("1"); else write_trace("0");
+    if(dataword & DATA_BIT_8) write_trace("1"); else write_trace("0");
 
-    printf("\n");
+    write_trace("\n");
 }
 
 void print_code(unsigned char codeword)
 {
-    printf("codeword=");
-    if(codeword & PW_BIT) printf("1"); else printf("0");
-    if(codeword & P01_BIT) printf("1"); else printf("0");
-    if(codeword & P02_BIT) printf("1"); else printf("0");
-    if(codeword & P03_BIT) printf("1"); else printf("0");
-    if(codeword & P04_BIT) printf("1"); else printf("0");
+    write_trace("codeword=");
+    if(codeword & PW_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P01_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P02_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P03_BIT) write_trace("1"); else write_trace("0");
+    if(codeword & P04_BIT) write_trace("1"); else write_trace("0");
 
-    printf("\n");
+    write_trace("\n");
 }

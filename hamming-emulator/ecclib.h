@@ -50,3 +50,6 @@ unsigned char *enable_ecc_memory(ecc_t *ecc);
 
 void traceOn(void);
 void traceOff(void);
+
+void write_trace(const char *format, ...);
+void close_file();
