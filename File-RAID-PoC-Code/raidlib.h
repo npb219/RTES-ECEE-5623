@@ -29,4 +29,9 @@ int checkEquivLBA(unsigned char *LBA1,
 int stripeFile(char *inputFileName, int offsetSectors);
 int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int missingChunk);
 
+void traceOn(void);
+void traceOff(void);
+void write_trace(const char *format, ...);
+void close_file();
+
 #endif

@@ -7,6 +7,8 @@
 #include <strings.h>
 #include <assert.h>
 
+#include <stdarg.h>  // For va_list, va_start, va_end
+
 #include "raidlib.h"
 
 #ifdef RAID64
@@ -17,6 +19,8 @@
 #define PTR_CAST (unsigned char *)
 #endif
 
+static int printTrace=0;
+static FILE *tracefile;
 
 // RAID-5 encoding
 //
@@ -80,7 +84,7 @@ int checkEquivLBA(unsigned char *LBA1,
     {
         if((*(LBA1+idx)) != (*(LBA2+idx)))
 	    {
-            printf("EQUIV CHECK MISMATCH @ byte %d: LBA1=0x%x, LBA2=0x%x\n", idx, (*LBA1+idx), (*LBA2+idx));
+            write_trace("EQUIV CHECK MISMATCH @ byte %d: LBA1=0x%x, LBA2=0x%x\n", idx, (*LBA1+idx), (*LBA2+idx));
 	        return ERROR;
 	    }
     }
@@ -122,13 +126,13 @@ int stripeFile(char *inputFileName, int offsetSectors)
 
         if((offset < (4*512)) && (feof(fdin)))
         {
-            printf("hit end of file\n");
+            write_trace("hit end of file\n");
             bzero(&stripe[offset], btoread);
             byteCnt+=offset;
         }
         else
         {
-            //printf("read full stripe\n");
+            //write_trace("read full stripe\n");
             assert(offset == (4*512));
             byteCnt+=(4*512);
         };
@@ -233,7 +237,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 1)
 	{
-		printf("will rebuild chunk 1\n");
+		write_trace("will rebuild chunk 1\n");
 	}
 	else
 	{
@@ -250,7 +254,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 2)
 	{
-		printf("will rebuild chunk 2\n");
+		write_trace("will rebuild chunk 2\n");
 	}
 	else
 	{
@@ -267,7 +271,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 3)
 	{
-		printf("will rebuild chunk 3\n");
+		write_trace("will rebuild chunk 3\n");
 	}
 	else
 	{
@@ -283,7 +287,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 4)
 	{
-		printf("will rebuild chunk 4\n");
+		write_trace("will rebuild chunk 4\n");
 	}
 	else
 	{
@@ -299,7 +303,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 5)
 	{
-		printf("will rebuild chunk 5\n");
+		write_trace("will rebuild chunk 5\n");
 	}
 	else
 	{
@@ -384,7 +388,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
         //
         if(missingChunk == 1)
 	{
-		printf("will rebuild chunk 1\n");
+		write_trace("will rebuild chunk 1\n");
 	}
 	else
 	{
@@ -400,7 +404,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 2)
 	{
-		printf("will rebuild chunk 2\n");
+		write_trace("will rebuild chunk 2\n");
 	}
 	else
 	{
@@ -416,7 +420,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 3)
 	{
-		printf("will rebuild chunk 3\n");
+		write_trace("will rebuild chunk 3\n");
 	}
 	else
 	{
@@ -432,7 +436,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 4)
 	{
-		printf("will rebuild chunk 4\n");
+		write_trace("will rebuild chunk 4\n");
 	}
 	else
 	{
@@ -449,7 +453,7 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
 
         if(missingChunk == 5)
 	{
-		printf("will rebuild chunk 5\n");
+		write_trace("will rebuild chunk 5\n");
 	}
 	else
 	{
@@ -532,3 +536,34 @@ int restoreFile(char *outputFileName, int offsetSectors, int fileLength, int mis
     return(fileLength);
 }
 
+void traceOn(void)
+{
+    printTrace=1;
+    tracefile = fopen("tracefile.txt", "w");
+}
+
+void traceOff(void)
+{
+    printTrace=0;
+}
+
+// write a trace to the file
+void write_trace(const char *format, ...) {
+    va_list args;
+    va_start(args, format);  // Initialize the va_list with the last known fixed argument
+        
+    if (tracefile != NULL) {
+        vfprintf(tracefile, format, args);  // Write the formatted string to the file
+
+        va_end(args);  // Clean up the va_list
+    } else {
+        vprintf(format, args);  // Write the formatted string to the console
+    }
+}
+
+// close the file when done
+void close_file() {
+    if (tracefile != NULL) {
+        fclose(tracefile);  // Close the file
+    }
+}

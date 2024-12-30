@@ -20,8 +20,10 @@ int main(int argc, char *argv[])
     
     if(argc >= 4)
     {
-	sscanf(argv[3], "%d", &chunkToRebuild);
+	    sscanf(argv[3], "%d", &chunkToRebuild);
         printf("chunk to restore = %d\n", chunkToRebuild);
+        traceOn();
+        write_trace("chunk to restore = %d\n", chunkToRebuild);
     }
   
     // What is the meaning of the "0" argument here? 
@@ -29,14 +31,19 @@ int main(int argc, char *argv[])
     // want to depricate this argument.
     bytesWritten=stripeFile(argv[1], 0); 
 
+    write_trace("%s input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5\n", argv[1]);
     printf("%s input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5\n", argv[1]);
 
+    write_trace("Enter chunk you have erased or 0 for none:");
     printf("Enter chunk you have erased or 0 for none:");
     fscanf(stdin, "%d", &chunkToRebuild);
+    write_trace("Got %d\n", chunkToRebuild);
     printf("Got %d\n", chunkToRebuild);
 
     if(chunkToRebuild > 0)
     {
+        write_trace("Will rebuild StripeChunk%1d.bin\n", chunkToRebuild);
+        write_trace("working on restoring file ...\n");
         printf("Will rebuild StripeChunk%1d.bin\n", chunkToRebuild);
         printf("working on restoring file ...\n");
 
@@ -45,11 +52,12 @@ int main(int argc, char *argv[])
     }
     else
     {
+        write_trace("Nothing erased, so nothing to restore\n");
         printf("Nothing erased, so nothing to restore\n");
         // What is the meaning of the first "0" argument and the second zero here? 
         bytesRestored=restoreFile(argv[2], 0, bytesWritten, 0); 
     }
 
+    write_trace("FINISHED\n");
     printf("FINISHED\n");
-        
 }

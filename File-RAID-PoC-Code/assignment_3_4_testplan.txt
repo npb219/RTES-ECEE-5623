@@ -1,0 +1,5 @@
+Testplan for RAID-5 functionality by Noah Bowden
+
+Step 1: make all for files raidlib.h, raidlib.c, and stripetest.c
+
+Step 2: run stripetest with 
