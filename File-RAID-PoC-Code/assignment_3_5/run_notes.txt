@@ -1,0 +1,40 @@
+########################### base run ###########################
+chunk to restore = 2
+start striping file at 0.000000
+end striping file at 1.123974
+time elapsed: 1.123974
+Cactus-12mpixel.ppm input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5
+Enter chunk you have erased or 0 for none:0
+Got 0
+start rebuild and save at 2.263935
+Nothing erased, so nothing to restore
+end writing file at 2.721650
+time elapsed: 0.457715
+FINISHED
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.00      0.11     0.11                             xorLBA
+
+########################### -o3 run ###########################
+chunk to restore = 2
+start striping file at 0.000000
+end striping file at 0.941081
+time elapsed: 0.941081
+Cactus-12mpixel.ppm input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5
+Enter chunk you have erased or 0 for none:0
+Got 0
+start rebuild and save at 2.350744
+Nothing erased, so nothing to restore
+end writing file at 2.798972
+time elapsed: 0.448228
+FINISHED
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+ 66.67      0.02     0.02                             stripeFile
+ 33.33      0.03     0.01                             write_trace.constprop.0
+
+########################### threaded -o0 run ###########################
