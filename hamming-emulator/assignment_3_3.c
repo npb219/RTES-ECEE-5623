@@ -29,6 +29,11 @@ int main(void)
         bitToFlip=i;
         flip_bit(&ECC, base_addr+0, bitToFlip);
         rc=read_byte(&ECC, base_addr+offset, &byteToRead);
+        write_trace("error: %d\n", rc);
+        if(i > 0)
+            assert(rc == i);
+        else
+            assert(rc == PW_ERROR);
         flip_bit(&ECC, base_addr+0, bitToFlip);
         assert((rc=read_byte(&ECC, base_addr+offset, &byteToRead)) == NO_ERROR);
         write_trace("CASES TESTED: %d\n", ++count);
@@ -48,6 +53,8 @@ int main(void)
             bitToFlip2=j;
             flip_bit(&ECC, base_addr+0, bitToFlip2);
             rc=read_byte(&ECC, base_addr+offset, &byteToRead);
+            write_trace("error: %d\n", rc);
+            assert(rc == DOUBLE_BIT_ERROR);
             flip_bit(&ECC, base_addr+0, bitToFlip2);
             write_trace("CASES TESTED: %d\n", ++count);
         }

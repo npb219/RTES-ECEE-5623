@@ -11,7 +11,7 @@
 #include <signal.h>
 
 #define DEFAULT_PORT 54321
-#define MAX 80 
+#define MAX 80 //max buff size
 
 extern int errno;
 extern void int_handler();
@@ -21,9 +21,7 @@ extern void serve_clients();
 int byte_count = 0 ;
 static int server_sock, client_sock, fromlen;
 static struct sockaddr_in server_sockaddr, client_sockaddr;
-char sendBuff[1025];
-
-char *filename = "test_file.txt";
+char sendBuff[1025]; //working buffer for send file
 
 int main(void)
 {
@@ -41,14 +39,12 @@ int main(void)
         exit(-1);
     }
 
+    //get socket
     if((server_sock=socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("Server: socket");
         exit(-1);
     }
-    
-    //get socket
-    server_sock = socket(AF_INET, SOCK_STREAM, 0);
 
     //printf("Socket retrieve success\n");
 
@@ -125,36 +121,44 @@ void serve_clients()
         }   
 
     
-        /* First read file in chunks of 256 bytes */
+        /* read file in chunks of 256 bytes */
         unsigned char buff[256]={0};
-        int nread = fread(buff,1,256,fp);
-        byte_count +=nread;
-
-        //  printf("Bytes read %d \n", nread);        
-
-        /* If read was success, send data. */
-        if(nread > 0)
+        int nread;
+        byte_count = 0;
+        
+        while( 1 )
         {
-            // printf("Sending \n");
-            write(client_sock, buff, nread);
-        }
-
-
-        if (nread < 256)
-        {
-            printf("TransferDone: %d bytes\n" ,byte_count);
-            if (feof(fp))
-            {
-                printf("End of file\n");
-            }
-
-            if (ferror(fp))
-            {
-                printf("Error reading\n");
+            //read
+            nread = fread( buff,1,256,fp );
+            if( nread < 1 )
                 break;
+
+            byte_count +=nread;
+
+            //printf("Bytes read %d \n", nread);        
+            buff[nread] = '\0';
+            printf("Buffer contents: %s\n", buff);
+            //write contents
+            write(client_sock, buff, nread);
+
+            //check for end
+            if (nread < 256)
+            {
+                printf("TransferDone: %d bytes\n" ,byte_count);
+                if (feof(fp))
+                {
+                    printf("End of file\n");
+                }
+
+                if (ferror(fp))
+                {
+                    printf("Error reading\n");
+                    break;
+                }
             }
         }
 
+        shutdown(client_sock, SHUT_WR); // Ensure all data is flushed
         close(client_sock);
         sleep(1);
 

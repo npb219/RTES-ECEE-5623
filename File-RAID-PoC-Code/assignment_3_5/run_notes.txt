@@ -38,3 +38,51 @@ Each sample counts as 0.01 seconds.
  33.33      0.03     0.01                             write_trace.constprop.0
 
 ########################### threaded -o0 run ###########################
+
+
+
+
+
+
+
+
+########################### code walkthrough ###########################
+########################### single thread -o0 ###########################
+chunk to restore = 0
+start striping file at 0.000000
+end striping file at 1.044574
+time elapsed: 1.044574
+Cactus-12mpixel.ppm input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5
+Enter chunk you have erased or 0 for none:0
+Got 0
+start rebuild and save at 3.741376
+Nothing erased, so nothing to restore
+end writing file at 4.228088
+time elapsed: 0.486711
+FINISHED
+########################### single thread -o3 ###########################
+chunk to restore = 0
+start striping file at 0.000000
+end striping file at 0.946234
+time elapsed: 0.946234
+Cactus-12mpixel.ppm input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5
+Enter chunk you have erased or 0 for none:0
+Got 0
+start rebuild and save at 2.042945
+Nothing erased, so nothing to restore
+end writing file at 2.494365
+time elapsed: 0.451420
+FINISHED
+########################### multi thread ###########################
+chunk to restore = 0
+start striping file at 0.000000
+end striping file at 0.805733
+time elapsed: 0.805733
+Cactus-12mpixel.ppm input file was written as 4 data chunks + 1 XOR parity on 5 devices 1...5
+Enter chunk you have erased or 0 for none:0
+Got 0
+start rebuild and save at 2.119207
+Nothing erased, so nothing to restore
+end writing file at 3.643343
+time elapsed: 1.524136
+FINISHED

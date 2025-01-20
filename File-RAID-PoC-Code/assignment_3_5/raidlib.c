@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <sys/sysinfo.h>
+
+typedef double FLOAT;
+
 //helper threads
 #define num_threads 3
 #define NUM_STRIPES 128
@@ -715,17 +718,18 @@ void *reader_thread(void *arg) {
         offset=0, bread=0, btoread=(4*512);
         do
         {
-            bread=fread(&stripe_buf[offset], 1, btoread, fdin); 
+            //bread=fread(&stripe_buf[offset], 1, btoread, fdin); 
+            bread=fread(&stripe.LBA1[offset], 1, btoread, fdin); 
             offset+=bread;
             btoread=(4*512)-bread;
         }
         while (!(feof(fdin)) && (btoread > 0));
 
-        //Now split the buffer into the 4 parts of the stripe
-        memcpy(stripe.LBA1, stripe_buf, SECTOR_SIZE);
-        memcpy(stripe.LBA2, stripe_buf + SECTOR_SIZE, SECTOR_SIZE);
-        memcpy(stripe.LBA3, stripe_buf + 2 * SECTOR_SIZE, SECTOR_SIZE);
-        memcpy(stripe.LBA4, stripe_buf + 3 * SECTOR_SIZE, SECTOR_SIZE);
+        // //Now split the buffer into the 4 parts of the stripe
+        // memcpy(stripe.LBA1, stripe_buf, SECTOR_SIZE);
+        // memcpy(stripe.LBA2, stripe_buf + SECTOR_SIZE, SECTOR_SIZE);
+        // memcpy(stripe.LBA3, stripe_buf + 2 * SECTOR_SIZE, SECTOR_SIZE);
+        // memcpy(stripe.LBA4, stripe_buf + 3 * SECTOR_SIZE, SECTOR_SIZE);
 
 
         if((offset < (4*512)) && (feof(fdin)))
@@ -921,7 +925,13 @@ int stripeFileThread(char *inputFileName, int offsetSectors)
     for(int i=0; i < NUM_THREADS; i++)
     {
         CPU_ZERO(&threadcpu);
-        cpuidx=(3);
+        //cpuidx=(3);
+        if(i == 0)
+            cpuidx=(2);
+        else if(i == 1)
+            cpuidx=(1);
+        else if(i == 2)
+            cpuidx=(3);
         CPU_SET(cpuidx, &threadcpu);
 
       rc=pthread_attr_init(&rt_sched_attr[i]);
@@ -971,9 +981,9 @@ int stripeFileThread(char *inputFileName, int offsetSectors)
     signal(SIGALRM, (void(*)()) Sequencer);
     /* arm the interval timer */
     itime.it_interval.tv_sec = 0;
-    itime.it_interval.tv_nsec = 25000;
+    itime.it_interval.tv_nsec = 15000;//25000; //interval == 20us
     itime.it_value.tv_sec = 0;
-    itime.it_value.tv_nsec = 25000;
+    itime.it_value.tv_nsec = 15000;//25000;
     timer_settime(timer_1, flags, &itime, &last_itime);
     //set start time
 
@@ -1014,14 +1024,23 @@ void Sequencer(int id)
 
     // Release each service at a sub-rate of the generic sequencer rate
 
-    // Servcie_1 = RT_MAX-1	@ 50 Hz
+    // Servcie_1 = RT_MAX-1	@ 25k Hz
     if((seqCnt % 2) == 1) sem_post(&semS1);
 
-    // Servcie_2 = RT_MAX-2	@ 20 Hz
-    if((seqCnt % 5) == 1) sem_post(&semS2);
+    //Servcie_2 = RT_MAX-2	@ 16k Hz
+    if((seqCnt % 3) == 1) sem_post(&semS2);
 
-    // Servcie_3 = RT_MAX-3	@ 10 Hz
+    //Servcie_3 = RT_MAX-3	@ 16k Hz
     if((seqCnt % 3) == 1 ) sem_post(&semS3);
+
+    // // Servcie_1 = RT_MAX-1	@ 50 Hz
+    // if((seqCnt % 2) == 1) sem_post(&semS1);
+
+    // // Servcie_2 = RT_MAX-2	@ 20 Hz
+    // if((seqCnt % 5) == 1) sem_post(&semS2);
+
+    // // Servcie_3 = RT_MAX-3	@ 10 Hz
+    // if((seqCnt % 3) == 1 ) sem_post(&semS3);
 
 
 

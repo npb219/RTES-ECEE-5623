@@ -6,6 +6,14 @@
         "unistd.h": "c",
         "types.h": "c",
         "stdlib.h": "c",
-        "mqueue.h": "c"
+        "mqueue.h": "c",
+        "assert.h": "c",
+        "ecclib.h": "c",
+        "in.h": "c",
+        "raidlib.h": "c",
+        "stdio.h": "c",
+        "fcntl.h": "c",
+        "semaphore.h": "c",
+        "syslog.h": "c"
     }
 }

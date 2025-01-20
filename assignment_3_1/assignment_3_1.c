@@ -18,14 +18,16 @@
 
 // Sequencer - 100 Hz 
 //                   [gives semaphores to all other services]
-// Service_1 - 25 Hz, every 4th Sequencer loop reads a V4L2 video frame
-// Service_2 -  1 Hz, every 100th Sequencer loop writes out the current video frame
+// Service_1 - 6 Hz, every 16th Sequencer loop reads a V4L2 video frame
+// Service_2 -  2 Hz, every 50th Sequencer loop writes out the current video frame
+// Service_3 -  2 Hz, every 50th Sequencer loop writes out the current video frame
 //
 // With the above, priorities by RM policy would be:
 //
 // Sequencer = RT_MAX	@ 100 Hz
-// Servcie_1 = RT_MAX-1	@ 25  Hz
-// Service_2 = RT_MIN	@ 1   Hz
+// Servcie_1 = RT_MAX-1	@ 6  Hz
+// Service_2 = RT_MIN	@ 2   Hz
+// Service_2 = RT_MIN	@ 2   Hz
 //
 
 // This is necessary for CPU affinity macros in Linux
@@ -86,7 +88,7 @@
 #define HRES_STR "640"
 #define VRES_STR "480"
 
-#define STARTUP_FRAMES (31) //measured 31 startup frames
+#define STARTUP_FRAMES (32) //measured 31 startup frames
 #define LAST_FRAMES (1)
 #define CAPTURE_FRAMES (180+LAST_FRAMES) //capture 180 frames
 #define FRAMES_TO_ACQUIRE (CAPTURE_FRAMES + STARTUP_FRAMES + LAST_FRAMES)
@@ -114,7 +116,7 @@ struct buffer
         size_t  length;
 };
 
-
+//frame struct
 struct save_frame_t
 {
     unsigned char   frame[HRES*VRES*PIXEL_SIZE];
@@ -122,6 +124,7 @@ struct save_frame_t
     char identifier_str[80];
 };
 
+//ring buffer for frames
 struct ring_buffer_t
 {
     unsigned int ring_size;
@@ -194,7 +197,7 @@ static int xioctl(int fh, int request, void *arg)
 
     do 
     {
-        rc = ioctl(fh, request, arg);
+        rc = ioctl(fh, request, arg); //actual read from cam operation
 
     } while (-1 == rc && EINTR == errno);
 
@@ -223,7 +226,7 @@ static int read_frame(void)
 
 
             default:
-                printf("mmap failure\n");
+                syslog(LOG_CRIT, "mmap failure\n");
                 errno_exit("VIDIOC_DQBUF");
         }
     }
@@ -250,11 +253,11 @@ static int process_image(const void *p, int size)
     unsigned char *frame_ptr = (unsigned char *)p;
 
     process_framecnt++;
-    printf("process frame %d: ", process_framecnt);
+    syslog(LOG_CRIT, "process frame %d: ", process_framecnt);
     
     if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_GREY)
     {
-        printf("NO PROCESSING for graymap as-is size %d\n", size);
+        syslog(LOG_CRIT, "NO PROCESSING for graymap as-is size %d\n", size);
     }
 
     else if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV)
@@ -285,11 +288,11 @@ static int process_image(const void *p, int size)
 
     else if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB24)
     {
-        printf("NO PROCESSING for RGB as-is size %d\n", size);
+        syslog(LOG_CRIT, "NO PROCESSING for RGB as-is size %d\n", size);
     }
     else
     {
-        printf("NO PROCESSING ERROR - unknown format\n");
+        syslog(LOG_CRIT, "NO PROCESSING ERROR - unknown format\n");
     }
 
     return process_framecnt;
@@ -301,13 +304,13 @@ static int save_image(const void *p, int size, struct timespec *frame_time)
     unsigned char *frame_ptr = (unsigned char *)p;
 
     save_framecnt++;
-    printf("save frame %d: ", save_framecnt);
+    syslog(LOG_CRIT, "save frame %d: ", save_framecnt);
     
 #ifdef DUMP_FRAMES	
 
     if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_GREY)
     {
-        printf("Dump graymap as-is size %d\n", size);
+        syslog(LOG_CRIT, "Dump graymap as-is size %d\n", size);
         dump_pgm(frame_ptr, size, save_framecnt, frame_time);
     }
 
@@ -319,13 +322,13 @@ static int save_image(const void *p, int size, struct timespec *frame_time)
         if(save_framecnt > 0) 
         {
             dump_ppm(frame_ptr, ((size*6)/4), save_framecnt, frame_time);
-            printf("Dump YUYV converted to RGB size %d\n", size);
+            syslog(LOG_CRIT, "Dump YUYV converted to RGB size %d\n", size);
         }
 #elif defined(COLOR_CONVERT_GRAY)
         if(save_framecnt > 0)
         {
             dump_pgm(frame_ptr, (size/2), process_framecnt, frame_time);
-            printf("Dump YUYV converted to YY size %d\n", size);
+            syslog(LOG_CRIT, "Dump YUYV converted to YY size %d\n", size);
         }
 #endif
 
@@ -333,12 +336,12 @@ static int save_image(const void *p, int size, struct timespec *frame_time)
 
     else if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB24)
     {
-        printf("Dump RGB as-is size %d\n", size);
+        syslog(LOG_CRIT, "Dump RGB as-is size %d\n", size);
         dump_ppm(frame_ptr, size, process_framecnt, frame_time);
     }
     else
     {
-        printf("ERROR - unknown dump format\n");
+        syslog(LOG_CRIT, "ERROR - unknown dump format\n");
     }
 #endif
 
@@ -382,7 +385,7 @@ static void init_mmap(char *dev_name)
         }
 	else
 	{
-	    printf("Device supports %d mmap buffers\n", req.count);
+	    syslog(LOG_CRIT, "Device supports %d mmap buffers\n", req.count);
 
 	    // allocate tracking buffers array for those that are mapped
             buffers = calloc(req.count, sizeof(*buffers));
@@ -420,7 +423,7 @@ static void init_mmap(char *dev_name)
                 if (MAP_FAILED == buffers[n_buffers].start)
                         errno_exit("mmap");
 
-                printf("mappped buffer %d\n", n_buffers);
+                syslog(LOG_CRIT, "mappped buffer %d\n", n_buffers);
         }
 }
 
@@ -497,7 +500,7 @@ static void init_device(char *dev_name)
 
     if (force_format)
     {
-        printf("FORCING FORMAT\n");
+        syslog(LOG_CRIT, "FORCING FORMAT\n");
         fmt.fmt.pix.width       = HRES;
         fmt.fmt.pix.height      = VRES;
 
@@ -523,7 +526,7 @@ static void init_device(char *dev_name)
     }
     else
     {
-        printf("ASSUMING FORMAT\n");
+        syslog(LOG_CRIT, "ASSUMING FORMAT\n");
         /* Preserve original settings as set by v4l2-ctl for example */
         if (-1 == xioctl(camera_device_fd, VIDIOC_G_FMT, &fmt))
                     errno_exit("VIDIOC_G_FMT");
@@ -576,7 +579,7 @@ static void stop_capturing(void)
     if(-1 == xioctl(camera_device_fd, VIDIOC_STREAMOFF, &type))
 		    errno_exit("VIDIOC_STREAMOFF");
 
-    printf("capture stopped\n");
+    syslog(LOG_CRIT, "capture stopped\n");
 }
 
 static void start_capturing(void)
@@ -588,7 +591,7 @@ static void start_capturing(void)
 
         for (i = 0; i < n_buffers; ++i) 
         {
-                printf("allocated buffer %d\n", i);
+                syslog(LOG_CRIT, "allocated buffer %d\n", i);
 
                 CLEAR(frame_buf);
                 frame_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -655,7 +658,7 @@ static void dump_ppm(const void *p, int size, unsigned int tag, struct timespec 
 
     clock_gettime(CLOCK_MONOTONIC, &time_now);
     fnow = (double)time_now.tv_sec + (double)time_now.tv_nsec / 1000000000.0;
-    printf("Frame written to flash at %lf, %d, bytes\n", (fnow-fstart), total);
+    syslog(LOG_CRIT, "Frame written to flash at %lf, %d, bytes\n", (fnow-fstart), total);
 
     close(dumpfd);
     
@@ -691,7 +694,7 @@ static void dump_pgm(const void *p, int size, unsigned int tag, struct timespec 
 
     clock_gettime(CLOCK_MONOTONIC, &time_now);
     fnow = (double)time_now.tv_sec + (double)time_now.tv_nsec / 1000000000.0;
-    printf("Frame written to flash at %lf, %d, bytes\n", (fnow-fstart), total);
+    syslog(LOG_CRIT, "Frame written to flash at %lf, %d, bytes\n", (fnow-fstart), total);
 
     close(dumpfd);
     
@@ -751,22 +754,22 @@ void main(void)
     // required to get camera initialized and ready
     seq_frame_read();
 
-    printf("Starting High Rate Sequencer Demo\n");
+    syslog(LOG_CRIT, "Starting High Rate Sequencer Demo\n");
     clock_gettime(MY_CLOCK_TYPE, &start_time_val); start_realtime=realtime(&start_time_val);
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
     clock_getres(MY_CLOCK_TYPE, &current_time_res); current_realtime_res=realtime(&current_time_res);
-    printf("START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
+    syslog(LOG_CRIT, "START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
     syslog(LOG_CRIT, "START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
 
 
-   printf("System has %d processors configured and %d available.\n", get_nprocs_conf(), get_nprocs());
+   syslog(LOG_CRIT, "System has %d processors configured and %d available.\n", get_nprocs_conf(), get_nprocs());
 
    CPU_ZERO(&allcpuset);
 
    for(i=0; i < NUM_CPU_CORES; i++)
        CPU_SET(i, &allcpuset);
 
-   printf("Using CPUS=%d from total available.\n", CPU_COUNT(&allcpuset));
+   syslog(LOG_CRIT, "Using CPUS=%d from total available.\n", CPU_COUNT(&allcpuset));
 
 
     // initialize the sequencer semaphores
@@ -790,14 +793,14 @@ void main(void)
     pthread_attr_getscope(&main_attr, &scope);
 
     if(scope == PTHREAD_SCOPE_SYSTEM)
-      printf("PTHREAD SCOPE SYSTEM\n");
+      syslog(LOG_CRIT, "PTHREAD SCOPE SYSTEM\n");
     else if (scope == PTHREAD_SCOPE_PROCESS)
-      printf("PTHREAD SCOPE PROCESS\n");
+      syslog(LOG_CRIT, "PTHREAD SCOPE PROCESS\n");
     else
-      printf("PTHREAD SCOPE UNKNOWN\n");
+      syslog(LOG_CRIT, "PTHREAD SCOPE UNKNOWN\n");
 
-    printf("rt_max_prio=%d\n", rt_max_prio);
-    printf("rt_min_prio=%d\n", rt_min_prio);
+    syslog(LOG_CRIT, "rt_max_prio=%d\n", rt_max_prio);
+    syslog(LOG_CRIT, "rt_min_prio=%d\n", rt_min_prio);
 
 
     for(i=0; i < NUM_THREADS; i++)
@@ -819,7 +822,7 @@ void main(void)
       threadParams[i].threadIdx=i;
     }
    
-    printf("Service threads will run on %d CPU cores\n", CPU_COUNT(&threadcpu));
+    syslog(LOG_CRIT, "Service threads will run on %d CPU cores\n", CPU_COUNT(&threadcpu));
 
     // Create Service threads which will block awaiting release for:
     //
@@ -837,7 +840,7 @@ void main(void)
     if(rc < 0)
         perror("pthread_create for service 1 - V4L2 video frame acquisition");
     else
-        printf("pthread_create successful for service 1\n");
+        syslog(LOG_CRIT, "pthread_create successful for service 1\n");
 
 
     // Service_2 = RT_MAX-2	@ 1 Hz
@@ -848,7 +851,7 @@ void main(void)
     if(rc < 0)
         perror("pthread_create for service 2 - flash frame storage");
     else
-        printf("pthread_create successful for service 2\n");
+        syslog(LOG_CRIT, "pthread_create successful for service 2\n");
 
 
     // Service_3 = RT_MAX-3	@ 1 Hz
@@ -859,7 +862,7 @@ void main(void)
     if(rc < 0)
         perror("pthread_create for service 3 - flash frame storage");
     else
-        printf("pthread_create successful for service 3\n");
+        syslog(LOG_CRIT, "pthread_create successful for service 3\n");
 
 
     // Wait for service threads to initialize and await relese by sequencer.
@@ -871,7 +874,7 @@ void main(void)
     // sleep(1);
  
     // Create Sequencer thread, which like a cyclic executive, is highest prio
-    printf("Start sequencer\n");
+    syslog(LOG_CRIT, "Start sequencer\n");
 
     // Sequencer = RT_MAX	@ 100 Hz
     //
@@ -904,7 +907,7 @@ void main(void)
 
    v4l2_frame_acquisition_shutdown();
 
-   printf("\nTEST COMPLETE\n");
+   syslog(LOG_CRIT, "\nTEST COMPLETE\n");
 }
 
 
@@ -941,14 +944,21 @@ void Sequencer(int id)
 
     // Release each service at a sub-rate of the generic sequencer rate
 
-    // Servcie_1 @ 5 Hz
-    if((seqCnt % 20) == 0) sem_post(&semS1);
+    // // Servcie_1 @ 5 Hz
+    // if((seqCnt % 20) == 0) sem_post(&semS1);
 
-    // Service_2 @ 1 Hz
-    if((seqCnt % 100) == 0) sem_post(&semS2);
+    // // Service_2 @ 1 Hz
+    // if((seqCnt % 100) == 0) sem_post(&semS2);
 
-    // Service_3 @ 1 Hz
-    if((seqCnt % 100) == 0) sem_post(&semS3);
+    // // Service_3 @ 1 Hz
+    // if((seqCnt % 100) == 0) sem_post(&semS3);
+
+    // Servcie_1 @ 6 Hz
+    if((seqCnt % 16) == 0) sem_post(&semS1);
+    // Service_2 @ 2 Hz
+    if((seqCnt % 50) == 0) sem_post(&semS2);
+    // Service_3 @ 2 Hz
+    if((seqCnt % 50) == 0) sem_post(&semS3);
 }
 
 
@@ -964,7 +974,7 @@ void *Service_1_frame_acquisition(void *threadp)
     // Start up processing and resource initialization
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
     syslog(LOG_CRIT, "S1 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
-    printf("S1 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
+    syslog(LOG_CRIT, "S1 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS1) // check for synchronous abort request
     {
@@ -981,7 +991,7 @@ void *Service_1_frame_acquisition(void *threadp)
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         syslog(LOG_CRIT, "S1 at 25 Hz on core %d for release %llu @ sec=%6.9lf\n", sched_getcpu(), S1Cnt, current_realtime-start_realtime);
 
-	if(S1Cnt > 250) {abortTest=TRUE;};
+	if(S1Cnt > 250) {abortS1=TRUE;};
     }
 
     // Resource shutdown here
@@ -1000,7 +1010,7 @@ void *Service_2_frame_process(void *threadp)
 
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
     syslog(LOG_CRIT, "S2 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
-    printf("S2 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
+    syslog(LOG_CRIT, "S2 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS2)
     {
@@ -1030,7 +1040,7 @@ void *Service_3_frame_storage(void *threadp)
 
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
     syslog(LOG_CRIT, "S3 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
-    printf("S3 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
+    syslog(LOG_CRIT, "S3 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS3)
     {
@@ -1046,7 +1056,7 @@ void *Service_3_frame_storage(void *threadp)
         syslog(LOG_CRIT, "S3 at 1 Hz on core %d for release %llu @ sec=%6.9lf\n", sched_getcpu(), S3Cnt, current_realtime-start_realtime);
 
 	// after last write, set synchronous abort
-	if(store_cnt == CAPTURE_FRAMES) {abortTest=TRUE;};
+	if(store_cnt == CAPTURE_FRAMES-1) {abortTest=TRUE;};
     }
 
     pthread_exit((void *)0);
@@ -1078,19 +1088,19 @@ void print_scheduler(void)
    switch(schedType)
    {
        case SCHED_FIFO:
-           printf("Pthread Policy is SCHED_FIFO\n");
+           syslog(LOG_CRIT, "Pthread Policy is SCHED_FIFO\n");
            break;
        case SCHED_OTHER:
-           printf("Pthread Policy is SCHED_OTHER\n"); exit(-1);
+           syslog(LOG_CRIT, "Pthread Policy is SCHED_OTHER\n"); exit(-1);
          break;
        case SCHED_RR:
-           printf("Pthread Policy is SCHED_RR\n"); exit(-1);
+           syslog(LOG_CRIT, "Pthread Policy is SCHED_RR\n"); exit(-1);
            break;
        //case SCHED_DEADLINE:
-       //    printf("Pthread Policy is SCHED_DEADLINE\n"); exit(-1);
+       //    syslog(LOG_CRIT, "Pthread Policy is SCHED_DEADLINE\n"); exit(-1);
        //    break;
        default:
-           printf("Pthread Policy is UNKNOWN\n"); exit(-1);
+           syslog(LOG_CRIT, "Pthread Policy is UNKNOWN\n"); exit(-1);
    }
 }
 
@@ -1141,7 +1151,7 @@ int seq_frame_read(void)
     }
     else 
     {
-        printf("at %lf\n", fnow);
+        syslog(LOG_CRIT, "at %lf\n", fnow);
     }
 
     if (-1 == xioctl(camera_device_fd, VIDIOC_QBUF, &frame_buf))
@@ -1154,7 +1164,7 @@ int seq_frame_process(void)
     int cnt;
     if( ring_buffer.count )
     {
-        printf("processing rb.tail=%d, rb.head=%d, rb.count=%d\n", ring_buffer.tail_idx, ring_buffer.head_idx, ring_buffer.count);
+        syslog(LOG_CRIT, "processing rb.tail=%d, rb.head=%d, rb.count=%d\n", ring_buffer.tail_idx, ring_buffer.head_idx, ring_buffer.count);
 
         ring_buffer.head_idx = (ring_buffer.head_idx + 2) % ring_buffer.ring_size;
 
@@ -1164,18 +1174,18 @@ int seq_frame_process(void)
         ring_buffer.count = ring_buffer.count - 5;
 
             
-        printf("rb.tail=%d, rb.head=%d, rb.count=%d ", ring_buffer.tail_idx, ring_buffer.head_idx, ring_buffer.count);
+        syslog(LOG_CRIT, "rb.tail=%d, rb.head=%d, rb.count=%d ", ring_buffer.tail_idx, ring_buffer.head_idx, ring_buffer.count);
     }
 
     if(process_framecnt > 0)
     {	
         clock_gettime(CLOCK_MONOTONIC, &time_now);
         fnow = (double)time_now.tv_sec + (double)time_now.tv_nsec / 1000000000.0;
-                printf(" processed at %lf, @ %lf FPS\n", (fnow-fstart), (double)(process_framecnt+1) / (fnow-fstart));
+                syslog(LOG_CRIT, " processed at %lf, @ %lf FPS\n", (fnow-fstart), (double)(process_framecnt+1) / (fnow-fstart));
     }
     else 
     {
-        printf("at %lf\n", fnow-fstart);
+        syslog(LOG_CRIT, "at %lf\n", fnow-fstart);
     }
 
     return cnt;
@@ -1190,18 +1200,18 @@ int seq_frame_store(void)
     if(process_framecnt > 0)
     {
         cnt=save_image(scratchpad_buffer, HRES*VRES*PIXEL_SIZE, &time_now);
-        printf("save_framecnt=%d ", save_framecnt);
+        syslog(LOG_CRIT, "save_framecnt=%d ", save_framecnt);
     }
 
     if(save_framecnt > 0)
     {	
         clock_gettime(CLOCK_MONOTONIC, &time_now);
         fnow = (double)time_now.tv_sec + (double)time_now.tv_nsec / 1000000000.0;
-                printf(" saved at %lf, @ %lf FPS\n", (fnow-fstart), (double)(process_framecnt+1) / (fnow-fstart));
+                syslog(LOG_CRIT, " saved at %lf, @ %lf FPS\n", (fnow-fstart), (double)(process_framecnt+1) / (fnow-fstart));
     }
     else 
     {
-        printf("at %lf\n", fnow-fstart);
+        syslog(LOG_CRIT, "at %lf\n", fnow-fstart);
     }
 
     return cnt;
@@ -1213,7 +1223,7 @@ int v4l2_frame_acquisition_shutdown(void)
     // shutdown of frame acquisition service
     stop_capturing();
 
-    printf("Total capture time=%lf, for %d frames, %lf FPS\n", (fstop-fstart), read_framecnt+1, ((double)read_framecnt / (fstop-fstart)));
+    syslog(LOG_CRIT, "Total capture time=%lf, for %d frames, %lf FPS\n", (fstop-fstart), read_framecnt+1, ((double)read_framecnt / (fstop-fstart)));
 
     uninit_device();
     close_device();

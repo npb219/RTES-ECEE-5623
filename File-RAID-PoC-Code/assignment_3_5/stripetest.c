@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
     // This is an offset in sectors that is not actually used at all in raidlib.c, so we might
     // want to depricate this argument.
     #ifdef THREADED
-    bytesWritten=stripeFileThread("Cactus-12mpixel.ppm", 0); 
-    //bytesWritten=stripeFileThread(argv[1], 0); 
+    //bytesWritten=stripeFileThread("Cactus-12mpixel.ppm", 0); 
+    bytesWritten=stripeFileThread(argv[1], 0); 
     #else
     bytesWritten=stripeFile(argv[1], 0); 
     #endif
