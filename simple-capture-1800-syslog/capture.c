@@ -51,9 +51,10 @@
 //#define HRES_STR "320"
 //#define VRES_STR "240"
 
-#define START_UP_FRAMES (8)
+#define START_UP_FRAMES (25) //found by test
 #define LAST_FRAMES (1)
-#define CAPTURE_FRAMES (1800+LAST_FRAMES)
+//#define CAPTURE_FRAMES (1800+LAST_FRAMES)
+#define CAPTURE_FRAMES (60+LAST_FRAMES)
 #define FRAMES_TO_ACQUIRE (CAPTURE_FRAMES + START_UP_FRAMES + LAST_FRAMES)
 
 //#define FRAMES_PER_SEC (1) 
@@ -62,9 +63,11 @@
 //#define FRAMES_PER_SEC (25) 
 #define FRAMES_PER_SEC (30) 
 
-#define COLOR_CONVERT_RGB
-#define DUMP_FRAMES
-//#define DUMP_PPM
+#define COLOR_CONVERT_RGB //color convert image
+#define DUMP_FRAMES //save frames
+#define DUMP_PPM //save with color pixels
+//#define TRANSFORM_IMG //apply laplace
+#define DIFF //apply diff
 
 // Format is used by a number of functions, so made as a file global
 static struct v4l2_format fmt;
@@ -97,6 +100,16 @@ static int              frame_count = (FRAMES_TO_ACQUIRE);
 
 static double fnow=0.0, fstart=0.0, fstop=0.0;
 static struct timespec time_now, time_start, time_stop;
+
+static double fcur=0.0, f1=0.0, f2=0.0;
+static struct timespec time_cur, time1, time2;
+
+// 3x3 Laplacian kernel (4-connectivity)
+int laplacian_kernel[3][3] = {
+    { 0,  1,  0},
+    { 1, -4,  1},
+    { 0,  1,  0}
+};
 
 static void errno_exit(const char *s)
 {
@@ -249,11 +262,64 @@ void yuv2rgb(int y, int u, int v, unsigned char *r, unsigned char *g, unsigned c
    *b = b1 ;
 }
 
+// Apply the Laplacian filter
+void apply_laplacian(const unsigned char *input, unsigned char *output, int width, int height)
+{
+    for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+            int sum = 0;
 
-// always ignore first 8 frames
-int framecnt=-8;
+            // Apply the 3x3 Laplacian kernel
+            for (int ky = -1; ky <= 1; ky++) {
+                for (int kx = -1; kx <= 1; kx++) {
+                    int pixel = input[(y + ky) * width + (x + kx)];
+                    sum += pixel * laplacian_kernel[ky + 1][kx + 1];
+                }
+            }
+
+            // Normalize to [0, 255] range
+            if (sum < 0) sum = 0;
+            if (sum > 255) sum = 255;
+
+            output[y * width + x] = (unsigned char)sum;
+        }
+    }
+}
+
+int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img) {
+    int threshold = 10;  // Example threshold to ignore small differences
+    int non_zero_count = 0;
+    
+    // Subtract images
+    for (int i = 0; i < size; ++i) {
+        int diff = abs(curr_img[i] - prev_img[i]);
+        diffed_img[i] = (diff > threshold) ? 255 : 0;  // Apply threshold
+    }
+
+    // Count non-zero pixels (motion detected areas)
+    for (int i = 0; i < size; ++i) {
+        if (diffed_img[i] != 0) {
+            non_zero_count++;
+        }
+    }
+
+    // If there are significant differences, consider motion detected
+    if (non_zero_count > (size * 0.1)) {  // Example: more than 10% of pixels differ
+        printf("Motion detected\n");
+        return 1;
+    } else {
+        printf("No motion detected\n");
+        return 0;
+    }
+}
+
+// always ignore first 8 frames - or tested
+int framecnt=-START_UP_FRAMES;
 
 unsigned char bigbuffer[(1280*960)];
+
+unsigned char last_image[(1280*960)]; //test buffer for previous image
+unsigned char diff_image[(1280*960)]; //test buffer for previous image
 
 static void process_image(const void *p, int size)
 {
@@ -286,7 +352,7 @@ static void process_image(const void *p, int size)
         dump_pgm(p, size, framecnt, &frame_time);
     }
 
-    else if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV)
+    else if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) //we are using this one
     {
 
 #if defined(COLOR_CONVERT_RGB)
@@ -329,6 +395,81 @@ static void process_image(const void *p, int size)
         }
 #endif
 
+#if defined(TRANSFORM_IMG)
+    if(framecnt > -1) 
+    {
+        int width = 1280; //buffer size allocation
+        int height = 960;
+
+        // Create buffer for grayscale (Y channel)
+        unsigned char *y_plane = malloc(width * height);
+        if (!y_plane) {
+            perror("Failed to allocate memory for Y plane");
+            exit(EXIT_FAILURE);
+        }
+
+        // Extract Y component (grayscale image)
+        for (i = 0, newi = 0; i < size; i += 4, newi += 2) {
+            // Y1 = first byte, Y2 = third byte
+            y_plane[newi] = pptr[i];     // First Y
+            y_plane[newi + 1] = pptr[i + 2]; // Second Y
+        }
+
+        // Allocate buffer for the Laplacian output
+        unsigned char *laplacian_output = malloc(width * height);
+        if (!laplacian_output) {
+            perror("Failed to allocate memory for Laplacian output");
+            free(y_plane);
+            exit(EXIT_FAILURE);
+        }
+
+        // Apply Laplacian edge detection
+        apply_laplacian(y_plane, laplacian_output, width, height);
+
+        // for (int i = 0; i < width * height; i++) {
+        //     laplacian_output[i] = 255 - laplacian_output[i];  // Invert pixel intensity
+        // }
+
+        // Save as a PGM image (for visualization/debugging)
+        dump_pgm(laplacian_output, width * height, framecnt, &frame_time);
+
+        free(y_plane);
+        free(laplacian_output);
+    }
+#endif
+
+#if defined(DIFF)
+    //test time: start
+    clock_gettime(CLOCK_MONOTONIC, &time1);
+    f1 = (double)time1.tv_sec + (double)time1.tv_nsec / 1000000000.0;
+
+    //get grey scale image
+    for(i=0, newi=0; i<size; i=i+4, newi=newi+2)
+    {
+        // Y1=first byte and Y2=third byte
+        bigbuffer[newi]=pptr[i];
+        bigbuffer[newi+1]=pptr[i+2];
+    }
+
+    //simulated task for enqueing frame
+    int test = framecnt;            
+
+    //test time: end
+    clock_gettime(CLOCK_MONOTONIC, &time2);
+    f2 = (double)time2.tv_sec + (double)time2.tv_nsec / 1000000000.0;
+    syslog(LOG_CRIT, "TIMETRACE: read time %lf\n", (f2-f1));
+
+    //diff images
+    detect_motion(last_image, bigbuffer, size, diff_image);
+
+    if(framecnt > -1)
+    {
+        dump_pgm(diff_image, (size/2), framecnt, &frame_time);
+    }
+
+    //copy new image
+    memcpy(last_image, bigbuffer, size);
+#endif
 
     }
 
@@ -346,12 +487,11 @@ static void process_image(const void *p, int size)
 
 }
 
-
 static int read_frame(void)
 {
     struct v4l2_buffer buf;
     unsigned int i;
-
+    
     switch (io)
     {
 
@@ -373,7 +513,6 @@ static int read_frame(void)
                         errno_exit("read");
                 }
             }
-
             process_image(buffers[0].start, buffers[0].length);
             break;
 
