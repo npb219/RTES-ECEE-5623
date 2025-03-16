@@ -125,12 +125,8 @@
 // updates from external timer adjustments
 //
 // However, some POSIX functions like clock_nanosleep can only use adjusted CLOCK_MONOTONIC or CLOCK_REALTIME
-//
-//#define MY_CLOCK_TYPE CLOCK_REALTIME
-//#define MY_CLOCK_TYPE CLOCK_MONOTONIC
+
 #define MY_CLOCK_TYPE CLOCK_MONOTONIC_RAW
-//#define MY_CLOCK_TYPE CLOCK_REALTIME_COARSE
-//#define MY_CLOCK_TYPE CLOCK_MONTONIC_COARSE
 
 //task aborts
 int abortTest=FALSE;
@@ -151,19 +147,21 @@ static unsigned long long seqCnt=0;
 //thread params
 typedef struct
 {
-    int threadIdx;
+    int threadIdx;//thread index
 } threadParams_t;
 
 
-void Sequencer(int id);
+void Sequencer(int id);//sequencer function
 
-void *Service_1(void *threadp);
-void *Service_2(void *threadp);
-void *Service_3(void *threadp);
+void *Service_1(void *threadp);//service 1
+void *Service_2(void *threadp);//service 2
+void *Service_3(void *threadp);//service 3
 
-
+//get time in msec
 double getTimeMsec(void);
+//get time in timespec
 double realtime(struct timespec *tsptr);
+//print scheduler type
 void print_scheduler(void);
 
 
@@ -202,7 +200,7 @@ static inline unsigned ccnt_read (void)
     return cc;
 }
 
-
+//run fibonacci on n
 unsigned long long fibonacci(unsigned int n)
 {
     if (n <= 1)
@@ -233,29 +231,15 @@ void main(int argc, char *argv[])
 
     pthread_attr_t main_attr;
     pid_t mainpid;
-    //print start time + info
-    //syslog(LOG_CRIT, "Starting High Rate Sequencer Demo\n");
-    // clock_gettime(MY_CLOCK_TYPE, &start_time_val); start_realtime=realtime(&start_time_val);
-    // clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    // clock_getres(MY_CLOCK_TYPE, &current_time_res); current_realtime_res=realtime(&current_time_res);
-    // printf("START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
-    // syslog(LOG_CRIT, "START High Rate Sequencer @ sec=%6.9lf with resolution %6.9lf\n", (current_realtime - start_realtime), current_realtime_res);
 
     //start syslog
-    openlog ("[COURSE:2][ASSIGNMENT:1]", LOG_NDELAY, LOG_DAEMON); 
+    openlog ("[COURSE:4][ASSIGNMENT:2]", LOG_NDELAY, LOG_DAEMON); 
     syslog(LOG_CRIT, argv[1]);
-
-   //timestamp = ccnt_read();
-   //printf("timestamp=%u\n", timestamp);
-
-   //syslog(LOG_CRIT, "System has %d processors configured and %d available.\n", get_nprocs_conf(), get_nprocs());
 
    CPU_ZERO(&allcpuset);
     //get cpu avail
    for(i=0; i < NUM_CPU_CORES; i++)
        CPU_SET(i, &allcpuset);
-
-   //syslog(LOG_CRIT, "Using CPUS=%d from total available.\n", CPU_COUNT(&allcpuset));
 
 
     // initialize the sequencer semaphores
@@ -268,7 +252,7 @@ void main(int argc, char *argv[])
     //set priorities
     rt_max_prio = sched_get_priority_max(SCHED_FIFO);
     rt_min_prio = sched_get_priority_min(SCHED_FIFO);
-    //set up sched fifp
+    //set up sched fifo
     rc=sched_getparam(mainpid, &main_param);
     main_param.sched_priority=rt_max_prio;
     rc=sched_setscheduler(getpid(), SCHED_FIFO, &main_param);
@@ -393,8 +377,6 @@ void main(int argc, char *argv[])
     {
         if(rc=pthread_join(threads[i], NULL) < 0)
 		perror("main pthread_join");
-	// else
-	// 	syslog(LOG_CRIT, "joined thread %d\n", i);
     }
 
    syslog(LOG_CRIT, "TEST COMPLETE");
@@ -411,11 +393,6 @@ void Sequencer(int id)
     // received interval timer signal
            
     seqCnt++;
-
-    // clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    // printf("Sequencer on core %d for cycle %llu @ sec=%6.9lf\n", sched_getcpu(), seqCnt, current_realtime-start_realtime);
-    // syslog(LOG_CRIT, "Sequencer on core %d for cycle %llu @ sec=%6.9lf\n", sched_getcpu(), seqCnt, current_realtime-start_realtime);
-
 
     // Release each service at a sub-rate of the generic sequencer rate
 
@@ -441,7 +418,6 @@ void Sequencer(int id)
         itime.it_value.tv_sec = 0;
         itime.it_value.tv_nsec = 0;
         timer_settime(timer_1, flags, &itime, &last_itime);
-	//syslog(LOG_CRIT, "Disabling sequencer interval timer with abort=%d and %llu of %lld\n", abortTest, seqCnt, sequencePeriods);
 
 	// shutdown all services
         sem_post(&semS1); sem_post(&semS2); sem_post(&semS3);
@@ -479,15 +455,11 @@ void *Service_1(void *threadp)
 	// DO WORK
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); start_proc_realtime=realtime(&current_time_val);  
         fibonacci(29);
-        //syslog(LOG_CRIT, "Thread 1 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, start_proc_realtime-start_realtime, sched_getcpu());
-        //nanosleep(&delay_time, &remaining_time);
         
 
-	// on order of up to milliseconds of latency to get time
+	    // on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         syslog(LOG_CRIT, "Thread 1 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "S1 50 Hz on core %d process time: sec=%6.9lf\n", sched_getcpu(), current_realtime-start_proc_realtime);
-        // syslog(LOG_CRIT, "S1 50 Hz on core %d for release %llu @ sec=%6.9lf\n", sched_getcpu(), S1Cnt, current_realtime-start_realtime);
     }
 
     // Resource shutdown here
@@ -506,7 +478,6 @@ void *Service_2(void *threadp)
     struct timespec remaining_time={0,11000000};
 
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    //syslog(LOG_CRIT, "S2 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
     printf("S2 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS2)
@@ -514,10 +485,8 @@ void *Service_2(void *threadp)
         sem_wait(&semS2);
         S2Cnt++;
         fibonacci(29);
-        //nanosleep(&delay_time, &remaining_time);
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        //syslog(LOG_CRIT, "S2 20 Hz on core %d for release %llu @ sec=%6.9lf\n", sched_getcpu(), S2Cnt, current_realtime-start_realtime);
         syslog(LOG_CRIT, "Thread 2 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
     }
 
@@ -536,7 +505,6 @@ void *Service_3(void *threadp)
     struct timespec remaining_time={0,20000000};
 
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    //syslog(LOG_CRIT, "S3 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
     printf("S3 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS3)
@@ -545,12 +513,9 @@ void *Service_3(void *threadp)
         S3Cnt++;
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); start_proc_realtime=realtime(&current_time_val); 
         fibonacci(29);
-        //nanosleep(&delay_time, &remaining_time);
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        //syslog(LOG_CRIT, "S3 10 Hz on core %d forrelease %llu @ sec=%6.9lf\n", sched_getcpu(), S3Cnt, current_realtime-start_realtime);
         syslog(LOG_CRIT, "Thread 3 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "S3 50 Hz on core %d process time: sec=%6.9lf\n", sched_getcpu(), current_realtime-start_proc_realtime);
 
     }
 
