@@ -1,0 +1,20 @@
+#ifndef CAPTURELIB
+#define CAPTURELIB
+
+
+/// @brief initialized camera, creates buffers for reads
+void init();
+
+/// @brief uninitialize camera
+void uninit();
+
+/// @brief gets frame from camera, runs grayscale and puts new frame in new frame queue
+void capture();
+
+/// @brief checks for frame in new frame queue. If available, performs diff then puts new frame into post processing queue
+void performDiff();
+
+/// @brief saves available image in save queue
+void saveImg();
+
+#endif

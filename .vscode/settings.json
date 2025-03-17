@@ -14,6 +14,18 @@
         "stdio.h": "c",
         "fcntl.h": "c",
         "semaphore.h": "c",
-        "syslog.h": "c"
+        "syslog.h": "c",
+        "*.tcc": "c",
+        "unordered_map": "c",
+        "fstream": "c",
+        "istream": "c",
+        "numeric": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "ranges": "c",
+        "utility": "c"
     }
 }
