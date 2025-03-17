@@ -1130,7 +1130,7 @@ void saveImg()
     if(f1!=NULL)
     {
         syslog(LOG_CRIT, "save thread actually got frame\n");
-        dump_pgm(bigbuffer, GRAY_SIZE, framecount++, &frame_time);
+        dump_pgm(f1->gray_frame, GRAY_SIZE, framecount++, &frame_time);
 syslog(LOG_CRIT, "save thread save frame\n");
         //release (queue buffer) image buffer back to camera for further use
         if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))

@@ -268,7 +268,7 @@ void main(int argc, char *argv[])
 
     // Service_2
     //
-    rt_param[1].sched_priority=rt_max_prio-2;
+    rt_param[1].sched_priority=rt_max_prio-1;
     pthread_attr_setschedparam(&rt_sched_attr[1], &rt_param[1]);
     rc=pthread_create(&threads[1], &rt_sched_attr[1], Service_2, (void *)&(threadParams[1]));
     if(rc < 0)
@@ -279,7 +279,7 @@ void main(int argc, char *argv[])
 
     // Service_3
     //
-    rt_param[2].sched_priority=rt_max_prio-3;
+    rt_param[2].sched_priority=rt_max_prio-2;
     pthread_attr_setschedparam(&rt_sched_attr[2], &rt_param[2]);
     rc=pthread_create(&threads[2], &rt_sched_attr[2], Service_3, (void *)&(threadParams[2]));
     if(rc < 0)
@@ -289,9 +289,9 @@ void main(int argc, char *argv[])
 
     // Service_4
     //
-    rt_param[2].sched_priority=rt_max_prio-3;
-    pthread_attr_setschedparam(&rt_sched_attr[2], &rt_param[2]);
-    rc=pthread_create(&threads[2], &rt_sched_attr[2], Service_3, (void *)&(threadParams[2]));
+    rt_param[3].sched_priority=rt_max_prio-1;
+    pthread_attr_setschedparam(&rt_sched_attr[3], &rt_param[3]);
+    rc=pthread_create(&threads[3], &rt_sched_attr[3], Service_4, (void *)&(threadParams[3]));
     if(rc < 0)
         perror("pthread_create for service 3");
     else
@@ -361,7 +361,8 @@ void Sequencer(int id)
     if((seqCnt % 100) == 1 ) sem_post(&semS3);
 
     // Servcie_4 = RT_MAX-1	@ 1 Hz
-    if((seqCnt-1 % 20) == 1 ) sem_post(&semS4);
+    // run 1 period behind service 1
+    if(((seqCnt-1) % 20) == 1 ) sem_post(&semS4);
 
 
 
@@ -410,6 +411,8 @@ void *Service_1(void *threadp)
         S1Cnt++;
 
 	    // DO WORK
+        //todo: temporarily moved save to service 1 to prove race cond on file descriptor
+        //probably will need to release fd immediately after capture and copy original image...
         capture();
         saveImg();
 
@@ -503,7 +506,7 @@ void *Service_4(void *threadp)
 
 	    // DO WORK
         // saveImg();
-        
+        fibonacci(29);
 
 	    // on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
