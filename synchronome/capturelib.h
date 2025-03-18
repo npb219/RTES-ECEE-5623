@@ -14,6 +14,9 @@ void capture();
 /// @brief checks for frame in new frame queue. If available, performs diff then puts new frame into post processing queue
 void performDiff();
 
+/// @brief checks for frame in post processing queue. If available, performs post process then puts new frame into save queue
+void postProcess();
+
 /// @brief saves available image in save queue
 void saveImg();
 

@@ -54,7 +54,7 @@
 #define GRAY_SIZE (640*480) //only contains light intensity component - 1 byte per pixel
 #define RGB_SIZE (640*480*3)//rgb has 3 bytes per pixel
 
-#define START_UP_FRAMES (25) //found by test
+#define START_UP_FRAMES (26) //found by test
 #define LAST_FRAMES (1)
 //#define CAPTURE_FRAMES (1800+LAST_FRAMES)
 #define CAPTURE_FRAMES (15+LAST_FRAMES)
@@ -95,7 +95,8 @@ struct frame
 {
     struct v4l2_buffer *buf;                //original camera frame
     unsigned char gray_frame[GRAY_SIZE];    //gray scaled image frame
-    unsigned char rgb_frame[RGB_SIZE];   //rgb applied frame
+    unsigned char rgb_frame[RGB_SIZE];      //rgb applied frame
+    unsigned char diff_frame[GRAY_SIZE];    //gray scaled diffed image frame
     unsigned char laplace_frame[GRAY_SIZE]; //laplace applied frame
 };
 
@@ -119,7 +120,11 @@ struct buffer          *buffers;                //memory mapped buffers for new 
 static unsigned int     n_buffers;              //number of buffers allocated
 static int              force_format=1;         //force format of images from camera
 
-static int              frame_count = (FRAMES_TO_ACQUIRE);  //frame count to acquire
+static int              frame_count = (FRAMES_TO_ACQUIRE);      //frame count to acquire
+static int              framecount = 0;                         //current frame count acquired
+static int              captured_frames = -START_UP_FRAMES;     //current frames captured
+
+static unsigned char prev_frame[GRAY_SIZE];     //previous image - used by service 2 only - grayscaled
 
 //time keeping variables for logging
 static double fnow=0.0, fstart=0.0, fstop=0.0;
@@ -127,6 +132,30 @@ static struct timespec time_now, time_start, time_stop;
 
 static double fcur=0.0, t1=0.0, t2=0.0;
 static struct timespec time_cur, time1, time2;
+
+//timer vals
+static struct timespec start_time_val;
+static double start_realtime;
+
+//exit with error code
+static void errno_exit(const char *s)
+{
+        fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
+        exit(EXIT_FAILURE);
+}
+//buffer control to camera
+static int xioctl(int fh, int request, void *arg)
+{
+        int r;
+
+        do 
+        {
+            r = ioctl(fh, request, arg);
+
+        } while (-1 == r && EINTR == errno);
+
+        return r;
+}
 
 /////////////////////////// circular buffer ///////////////////////////
 
@@ -200,7 +229,7 @@ struct frame *remove_from_buffer(struct circular_buffer *cb) {
 }
 
 
-/// @brief cleanup frame
+/// @brief cleanup frame.
 /// @param f 
 static void free_frame(struct frame *f) {
     if (!f) return;
@@ -220,32 +249,18 @@ static void free_circular_buffer(struct circular_buffer *cb) {
 
 /////////////////////////// end circular buffer ///////////////////////////
 
+//get real time as double from timespec
+static double realtime(struct timespec *tsptr)
+{
+    return ((double)(tsptr->tv_sec) + (((double)tsptr->tv_nsec)/1000000000.0));
+}
+
 // 3x3 Laplacian kernel (4-connectivity) for difference detection
 static int laplacian_kernel[3][3] = {
     { 0,  1,  0},
     { 1, -4,  1},
     { 0,  1,  0}
 };
-
-//exit with error code
-static void errno_exit(const char *s)
-{
-        fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-}
-//buffer control to camera
-static int xioctl(int fh, int request, void *arg)
-{
-        int r;
-
-        do 
-        {
-            r = ioctl(fh, request, arg);
-
-        } while (-1 == r && EINTR == errno);
-
-        return r;
-}
 
 //file name headers
 static char ppm_header[]="P6\n#9999999999 sec 9999999999 msec \n"HRES_STR" "VRES_STR"\n255\n";
@@ -404,7 +419,12 @@ static void apply_laplacian(const unsigned char *input, unsigned char *output, i
     }
 }
 
-//detect motion (difference) between 2 images: prev_img and curr_img. save result in diffed_img
+/// @brief detect motion (difference) between 2 images: prev_img and curr_img. save result in diffed_img
+/// @param prev_img ptr to previous image
+/// @param curr_img ptr to current image
+/// @param size size of image (bytes)
+/// @param diffed_img ptr to save diffed image
+/// @return 1 if different, 0 otherwise
 static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img) {
     int threshold = 10;  // Example threshold to ignore small differences
     int non_zero_count = 0;
@@ -423,7 +443,7 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
     printf("different pixes: %d\n", non_zero_count);
     // If there are significant differences, consider motion detected
-    if (non_zero_count > (2000)) {  // more than 2000 of pixels differ (found by test)
+    if (non_zero_count > (800)) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -698,7 +718,7 @@ static int read_frame(void)
     apply_grayscale(buffers[f1->buf->index].start, f1->buf->bytesused, f1->gray_frame);
     //add new frame to new frame buffer
     add_to_buffer(&new_frame_cb, f1);
-
+    
     // //process the image
     // process_image(buffers[buf.index].start, buf.bytesused);
     // //release (queue buffer) image buffer back to camera for further use
@@ -1069,6 +1089,10 @@ void init()
     open_device();
     init_device();
     start_capturing();
+
+    //set start time
+    clock_gettime(CLOCK_REALTIME, &start_time_val);
+    start_realtime=realtime(&start_time_val);
 }
 
 void uninit()
@@ -1113,32 +1137,88 @@ void capture()
 
 void performDiff()
 {
+    struct frame *f1;//frame object
 
+    struct timespec frame_time;
+    double current_realtime;
+    // record when process was called
+    clock_gettime( CLOCK_REALTIME, &frame_time );
+    current_realtime=realtime( &frame_time );
+
+    f1 = remove_from_buffer( &new_frame_cb );
+    if( f1!=NULL )
+    {
+        //check frame counter for throwaway. doing here so we still load the diff pipeline
+        //then detect motion
+        if( ( captured_frames++ > -1 ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
+        {
+            syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
+            //copy current to previous
+            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+
+            //add to post process buffer
+            add_to_buffer( &post_proc_cb, f1 );
+        }
+        else
+        {
+            syslog( LOG_CRIT, "S2 toss @ sec=%6.9lf\n", current_realtime-start_realtime );
+            //copy current to previous
+            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+            
+            //release (queue buffer) image buffer back to camera for further use
+            if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                errno_exit("VIDIOC_QBUF");
+            //release frame - will not use further
+            free_frame( f1 );
+        }
+    }
 }
 
-int framecount = 0;
+void postProcess()
+{
+    struct frame *f1;//frame object
+
+    struct timespec frame_time;
+    double current_realtime;
+    // record when process was called
+    clock_gettime( CLOCK_REALTIME, &frame_time );
+    current_realtime=realtime( &frame_time );
+
+    f1 = remove_from_buffer( &post_proc_cb );
+    if( f1!=NULL )
+    {
+        syslog( LOG_CRIT, "S3 process @ sec=%6.9lf\n", current_realtime-start_realtime );
+        //apply rgb to image
+        apply_rgb( buffers[f1->buf->index].start, f1->buf->bytesused, f1->rgb_frame );
+
+        //add to save buffer
+        add_to_buffer( &save_frame_cb, f1 );
+    }
+}
+
 void saveImg()
 {
     struct frame *f1;//frame object
     struct timespec frame_time;
+    double current_realtime;
     // record when process was called
-    clock_gettime(CLOCK_REALTIME, &frame_time);    
-    syslog(LOG_CRIT, "save thread start\n");
+    clock_gettime( CLOCK_REALTIME, &frame_time );
+    current_realtime = realtime( &frame_time );
 
-    f1 = remove_from_buffer(&new_frame_cb);
-    syslog(LOG_CRIT, "save thread got frame\n");
-    if(f1!=NULL)
+    f1 = remove_from_buffer( &save_frame_cb );
+    if( f1!=NULL )
     {
-        syslog(LOG_CRIT, "save thread actually got frame\n");
-        dump_pgm(f1->gray_frame, GRAY_SIZE, framecount++, &frame_time);
-syslog(LOG_CRIT, "save thread save frame\n");
+        if( framecount++ > -1 ) //allow startup frames
+        {
+            syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
+
+            // dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
+            dump_ppm( f1->rgb_frame, RGB_SIZE, framecount, &frame_time );
+        }
+        
         //release (queue buffer) image buffer back to camera for further use
         if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
             errno_exit("VIDIOC_QBUF");
-syslog(LOG_CRIT, "save thread release frame\n");
-        free_frame(f1);
-        syslog(LOG_CRIT, "save thread free frame\n");
+        free_frame( f1 );
     }
-
-
 }

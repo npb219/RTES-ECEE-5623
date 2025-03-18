@@ -353,22 +353,23 @@ void Sequencer(int id)
 
     // Servcie_1 = RT_MAX-1	@ 100 Hz
     if((seqCnt % 20) == 1) sem_post(&semS1);
+    //if((seqCnt % 100) == 1) sem_post(&semS1);
 
     // // Servcie_2 = RT_MAX-1	@ 100 Hz
-    if((seqCnt % 100) == 1) sem_post(&semS2);
+    if((seqCnt % 20) == 1) sem_post(&semS2);
 
     // // Servcie_3 = RT_MAX-2	@ 1 Hz
-    if((seqCnt % 100) == 1 ) sem_post(&semS3);
+    if((seqCnt % 20) == 1 ) sem_post(&semS3);
 
     // Servcie_4 = RT_MAX-1	@ 1 Hz
     // run 1 period behind service 1
-    if(((seqCnt-1) % 20) == 1 ) sem_post(&semS4);
+    if(((seqCnt) % 20) == 1 ) sem_post(&semS4);
 
 
 
 
     
-    if(abortTest || (seqCnt >= 1200))//sequencePeriods))
+    if(abortTest || (seqCnt >= 3000))//sequencePeriods))
     {
         // disable interval timer
         itime.it_interval.tv_sec = 0;
@@ -414,7 +415,7 @@ void *Service_1(void *threadp)
         //todo: temporarily moved save to service 1 to prove race cond on file descriptor
         //probably will need to release fd immediately after capture and copy original image...
         capture();
-        saveImg();
+        
 
 	    // on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
@@ -443,7 +444,7 @@ void *Service_2(void *threadp)
     {
         sem_wait(&semS2);
         S2Cnt++;
-        fibonacci(29);
+        performDiff();
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         syslog(LOG_CRIT, "Thread 2 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
@@ -470,8 +471,8 @@ void *Service_3(void *threadp)
     {
         sem_wait(&semS3);
         S3Cnt++;
-        clock_gettime(MY_CLOCK_TYPE, &current_time_val); start_proc_realtime=realtime(&current_time_val); 
-        fibonacci(29);
+        
+        postProcess();
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         syslog(LOG_CRIT, "Thread 3 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
@@ -505,8 +506,7 @@ void *Service_4(void *threadp)
         S4Cnt++;
 
 	    // DO WORK
-        // saveImg();
-        fibonacci(29);
+        saveImg();
 
 	    // on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
