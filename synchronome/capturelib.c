@@ -60,6 +60,9 @@
 #define CAPTURE_FRAMES (15+LAST_FRAMES)
 #define FRAMES_TO_ACQUIRE (CAPTURE_FRAMES + START_UP_FRAMES + LAST_FRAMES)
 
+/// @brief desired speed in hz
+int speed_hz = 1;
+
 static int frames_per_sec = 2;
 
 #define COLOR_CONVERT_RGB //color convert image
@@ -443,7 +446,7 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
     printf("different pixes: %d\n", non_zero_count);
     // If there are significant differences, consider motion detected
-    if (non_zero_count > (800)) {  // more than 800 of pixels differ (found by test)
+    if ( non_zero_count > ( ( speed_hz == 10 ) ? 600 : 800 ) ) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -680,16 +683,18 @@ static void apply_grayscale(const void *p, int size, unsigned char *gray_img)
 //get frame from camera buffers
 static int read_frame(void)
 {
-    struct v4l2_buffer buf; //working image buffer
     unsigned int i;
     struct frame *f1;//frame object
+
+    //create buffer obj
+    f1 = create_frame();
     
-    CLEAR(buf);
+    CLEAR(*f1->buf);
 
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.memory = V4L2_MEMORY_MMAP;
+    f1->buf->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    f1->buf->memory = V4L2_MEMORY_MMAP;
 
-    if (-1 == xioctl(fd, VIDIOC_DQBUF, &buf)) //get image (dequeue buffer) from camera, save ptr to buf
+    if (-1 == xioctl(fd, VIDIOC_DQBUF, f1->buf)) //get image (dequeue buffer) from camera, save ptr to buf
     {
         switch (errno) //error handle
         {
@@ -708,12 +713,9 @@ static int read_frame(void)
         }
     }
     //valid buffer?
-    assert(buf.index < n_buffers);
+    assert(f1->buf->index < n_buffers);
 
-    //create buffer obj
-    f1 = create_frame();
-    //copy camera frame to new frame object
-    memcpy(f1->buf, &buf, sizeof(struct v4l2_buffer));
+    
     //apply grayscale
     apply_grayscale(buffers[f1->buf->index].start, f1->buf->bytesused, f1->gray_frame);
     //add new frame to new frame buffer

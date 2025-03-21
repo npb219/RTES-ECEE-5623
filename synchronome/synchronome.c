@@ -36,6 +36,7 @@
 #define _GNU_SOURCE
 
 #include "capturelib.h"
+#include <getopt.h>             /* getopt_long() */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,6 +105,9 @@ double getTimeMsec(void);
 //get time in timespec
 double realtime(struct timespec *tsptr);
 
+//frame rate
+int speed = 1;
+
 
 // For background on high resolution time-stamps and clocks:
 //
@@ -140,15 +144,11 @@ static inline unsigned ccnt_read (void)
     return cc;
 }
 
-//run fibonacci on n
-unsigned long long fibonacci(unsigned int n)
-{
-    if (n <= 1)
-        return n;
-    return fibonacci(n - 1) + fibonacci(n - 2);
+// Function to display help
+void print_usage() {
+    printf("Usage: ./synchronome [-s <speed>]\n");
+    printf("   -s <speed>  Set capture speed (in 1 or 10 Hz)\n");
 }
-
-
 
 void main(int argc, char *argv[])
 {
@@ -172,8 +172,31 @@ void main(int argc, char *argv[])
     pthread_attr_t main_attr;
     pid_t mainpid;
 
+    int opt;
+
+    // Parse command-line arguments
+    while ((opt = getopt(argc, argv, "s:")) != -1) {
+        switch (opt) {
+            case 's':  // -s option
+                speed = atoi(optarg);  // Convert argument to integer
+                if (speed != 1 && speed != 10) {
+                    fprintf(stderr, "Error: Speed must be 1 (default) or 10hz.\n");
+                    print_usage();
+                    exit(EXIT_FAILURE);
+                }
+                break;
+
+            default:
+                print_usage();
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    // Print the capture speed for verification
+    printf("Capture speed set to %d Hz\n", speed);
+
     //start syslog
-    openlog ("[COURSE:4][ASSIGNMENT:3]", LOG_NDELAY, LOG_DAEMON); 
+    openlog ("[COURSE:4][Final Project]", LOG_NDELAY, LOG_DAEMON); 
     syslog(LOG_CRIT, argv[1]);
 
     //init camera
@@ -228,6 +251,7 @@ void main(int argc, char *argv[])
             cpuidx=(3);
         CPU_SET(cpuidx, &threadcpu);
 
+        //explicit, sched fifo
         rc=pthread_attr_init(&rt_sched_attr[i]);
         rc=pthread_attr_setinheritsched(&rt_sched_attr[i], PTHREAD_EXPLICIT_SCHED);
         rc=pthread_attr_setschedpolicy(&rt_sched_attr[i], SCHED_FIFO);
@@ -351,21 +375,29 @@ void Sequencer(int id)
 
     // Release each service at a sub-rate of the generic sequencer rate
 
-    // Servcie_1 = RT_MAX-1	@ 100 Hz
-    if((seqCnt % 20) == 1) sem_post(&semS1);
-    //if((seqCnt % 100) == 1) sem_post(&semS1);
+    if( speed == 1 ) //1hz
+    {
+        // Servcie_1 = RT_MAX-1	@ 5 Hz
+        if((seqCnt % 20) == 1) sem_post(&semS1);
+        // Servcie_2 = RT_MAX-1	@ 5 Hz
+        if((seqCnt % 20) == 1) sem_post(&semS2);
+        // Servcie_3 = RT_MAX-2	@ 1 Hz
+        if((seqCnt % 100) == 1 ) sem_post(&semS3);
+        // Servcie_4 = RT_MAX-1	@ 1 Hz
+        if(((seqCnt) % 100) == 1 ) sem_post(&semS4);
+    }
+    else //10hz
+    {
 
-    // // Servcie_2 = RT_MAX-1	@ 100 Hz
-    if((seqCnt % 20) == 1) sem_post(&semS2);
-
-    // // Servcie_3 = RT_MAX-2	@ 1 Hz
-    if((seqCnt % 20) == 1 ) sem_post(&semS3);
-
-    // Servcie_4 = RT_MAX-1	@ 1 Hz
-    // run 1 period behind service 1
-    if(((seqCnt) % 20) == 1 ) sem_post(&semS4);
-
-
+        // Servcie_1 = RT_MAX-1	@ 20 Hz
+        if((seqCnt % 5) == 1) sem_post(&semS1);
+        // Servcie_2 = RT_MAX-1	@ 20 Hz
+        if((seqCnt % 5) == 1) sem_post(&semS2);
+        // Servcie_3 = RT_MAX-2	@ 10 Hz
+        if((seqCnt % 10) == 1 ) sem_post(&semS3);
+        // Servcie_4 = RT_MAX-1	@ 10 Hz
+        if(((seqCnt) % 10) == 1 ) sem_post(&semS4);
+    }
 
 
     
@@ -396,13 +428,8 @@ void *Service_1(void *threadp)
     unsigned long long S1Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
 
-    struct timespec delay_time={0,11000000};
-    struct timespec remaining_time={0,11000000};
-
     // Start up processing and resource initialization
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    //syslog(LOG_CRIT, "S1 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
-    //printf("S1 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS1) // check for synchronous abort request
     {
@@ -411,14 +438,14 @@ void *Service_1(void *threadp)
 
         S1Cnt++;
 
-	    // DO WORK
-        //todo: temporarily moved save to service 1 to prove race cond on file descriptor
-        //probably will need to release fd immediately after capture and copy original image...
+        // on order of up to milliseconds of latency to get time
+        clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+
+	    // capture frame
         capture();
         
 
-	    // on order of up to milliseconds of latency to get time
-        clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+	    
         syslog(LOG_CRIT, "Thread 1 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
     }
 
@@ -434,16 +461,14 @@ void *Service_2(void *threadp)
     double current_realtime;
     unsigned long long S2Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
-    struct timespec delay_time={0,11000000};
-    struct timespec remaining_time={0,11000000};
 
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    //printf("S2 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS2)
     {
         sem_wait(&semS2);
         S2Cnt++;
+        //diff image
         performDiff();
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
@@ -461,17 +486,15 @@ void *Service_3(void *threadp)
     unsigned long long S3Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
     double start_proc_realtime;
-    struct timespec delay_time={0,20000000};
-    struct timespec remaining_time={0,20000000};
 
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    //printf("S3 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS3)
     {
         sem_wait(&semS3);
         S3Cnt++;
         
+        //post process image
         postProcess();
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
@@ -490,13 +513,8 @@ void *Service_4(void *threadp)
     unsigned long long S4Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
 
-    struct timespec delay_time={0,11000000};
-    struct timespec remaining_time={0,11000000};
-
     // Start up processing and resource initialization
     clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-    //syslog(LOG_CRIT, "S4 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
-    //printf("S4 thread @ sec=%6.9lf\n", current_realtime-start_realtime);
 
     while(!abortS4) // check for synchronous abort request
     {
@@ -505,7 +523,7 @@ void *Service_4(void *threadp)
 
         S4Cnt++;
 
-	    // DO WORK
+	    // save image
         saveImg();
 
 	    // on order of up to milliseconds of latency to get time

@@ -2,6 +2,9 @@
 #define CAPTURELIB
 
 
+/// @brief desired speed in hz
+extern int speed_hz;
+
 /// @brief initialized camera, creates buffers for reads
 void init();
 
