@@ -101,6 +101,8 @@ struct frame
     unsigned char rgb_frame[RGB_SIZE];      //rgb applied frame
     unsigned char diff_frame[GRAY_SIZE];    //gray scaled diffed image frame
     unsigned char laplace_frame[GRAY_SIZE]; //laplace applied frame
+    double image_capture_start_time;        //capture time
+    int in_buffer;
 };
 
 // Circular buffer structure
@@ -429,7 +431,7 @@ static void apply_laplacian(const unsigned char *input, unsigned char *output, i
 /// @param diffed_img ptr to save diffed image
 /// @return 1 if different, 0 otherwise
 static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img) {
-    int threshold = 10;  // Example threshold to ignore small differences
+    int threshold = ( speed_hz == 10 ) ? 27 : 35;//10;  // Example threshold to ignore small differences
     int non_zero_count = 0;
     
     // Subtract images
@@ -446,7 +448,7 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
     printf("different pixes: %d\n", non_zero_count);
     // If there are significant differences, consider motion detected
-    if ( non_zero_count > ( ( speed_hz == 10 ) ? 600 : 800 ) ) {  // more than 800 of pixels differ (found by test)
+    if ( non_zero_count > ( ( speed_hz == 10 ) ? 1000 : 900 ) ) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -686,6 +688,9 @@ static int read_frame(void)
     unsigned int i;
     struct frame *f1;//frame object
 
+    struct timespec frame_time;
+    double current_realtime;
+
     //create buffer obj
     f1 = create_frame();
     
@@ -693,6 +698,12 @@ static int read_frame(void)
 
     f1->buf->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     f1->buf->memory = V4L2_MEMORY_MMAP;
+
+    // record when process was called
+    clock_gettime( CLOCK_REALTIME, &frame_time );
+    current_realtime=realtime( &frame_time );
+    //save frame time
+    f1->image_capture_start_time = current_realtime-start_realtime;
 
     if (-1 == xioctl(fd, VIDIOC_DQBUF, f1->buf)) //get image (dequeue buffer) from camera, save ptr to buf
     {
@@ -882,7 +893,7 @@ static void init_mmap(void)
 
     CLEAR(req);
 
-    req.count = 6; //allocate 6 buffers for reading
+    req.count = 12; //allocate 6 buffers for reading
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; //of type video capture
     req.memory = V4L2_MEMORY_MMAP; //memory map type memory
 
@@ -1139,7 +1150,13 @@ void capture()
 
 void performDiff()
 {
+    static int diff_cnt = 0;
+    static int same_cnt = 0;
+    
     struct frame *f1;//frame object
+    static struct frame *f2;//last frame object
+    if(f2==NULL)
+        f2 = create_frame();
 
     struct timespec frame_time;
     double current_realtime;
@@ -1154,7 +1171,7 @@ void performDiff()
         //then detect motion
         if( ( captured_frames++ > -1 ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
         {
-            syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
+            //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
             //copy current to previous
             memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
@@ -1163,9 +1180,10 @@ void performDiff()
         }
         else
         {
-            syslog( LOG_CRIT, "S2 toss @ sec=%6.9lf\n", current_realtime-start_realtime );
+            //syslog( LOG_CRIT, "S2 toss @ sec=%6.9lf\n", current_realtime-start_realtime );
             //copy current to previous
-            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+            if( speed_hz == 1 )
+                memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
             
             //release (queue buffer) image buffer back to camera for further use
             if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
@@ -1173,6 +1191,75 @@ void performDiff()
             //release frame - will not use further
             free_frame( f1 );
         }
+
+        // if( captured_frames++ > -1 )
+        // {
+        //     if( detect_motion( f2->gray_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) ) //frame change, might still be moving
+        //     {
+        //         diff_cnt++;
+        //         same_cnt = 0;
+        //     }
+        //     else //frame didnt change
+        //     {
+        //         same_cnt++;
+        //         diff_cnt = 0;
+        //     }
+
+        //     if( same_cnt == 1 ) //found first static image
+        //     {
+        //         if( f2 != NULL && f2->in_buffer == 0 )
+        //         {
+        //             //release (queue buffer) image buffer back to camera for further use
+        //             if (-1 == xioctl(fd, VIDIOC_QBUF, f2->buf))
+        //                 errno_exit("VIDIOC_QBUF");
+        //             //release frame - will not use further
+        //             free_frame( f2 );
+        //         }
+
+        //         //add to post process buffer
+        //         f1->in_buffer = 1;
+        //         add_to_buffer( &post_proc_cb, f1 );
+
+        //         f2 = f1;
+        //     }
+        //     else if( diff_cnt == 2 )// if second in a row changing image, try to capture last
+        //     {
+        //         //add to post process buffer
+        //         f2->in_buffer = 1;
+        //         add_to_buffer( &post_proc_cb, f2 );
+
+        //         f2 = f1;
+        //     }
+        //     else
+        //     {
+        //         if( f2 != NULL && f2->in_buffer == 0 )
+        //         {
+        //             //release (queue buffer) image buffer back to camera for further use
+        //             if (-1 == xioctl(fd, VIDIOC_QBUF, f2->buf))
+        //                 errno_exit("VIDIOC_QBUF");
+        //             //release frame - will not use further
+        //             free_frame( f2 );
+        //         }
+
+        //         //copy current to previous
+        //         f2 = f1;
+        //     }
+        // }
+        // else
+        // {
+        //     if( f2 != NULL )
+        //     {
+        //         if( f2->buf->bytesused )
+        //         //release (queue buffer) image buffer back to camera for further use
+        //         if (-1 == xioctl(fd, VIDIOC_QBUF, f2->buf))
+        //             errno_exit("VIDIOC_QBUF");
+        //         //release frame - will not use further
+        //         free_frame( f2 );
+        //     }
+
+        //     //copy current to previous
+        //     f2 = f1;
+        // }
     }
 }
 
@@ -1189,7 +1276,7 @@ void postProcess()
     f1 = remove_from_buffer( &post_proc_cb );
     if( f1!=NULL )
     {
-        syslog( LOG_CRIT, "S3 process @ sec=%6.9lf\n", current_realtime-start_realtime );
+        //syslog( LOG_CRIT, "S3 process @ sec=%6.9lf\n", current_realtime-start_realtime );
         //apply rgb to image
         apply_rgb( buffers[f1->buf->index].start, f1->buf->bytesused, f1->rgb_frame );
 
@@ -1198,7 +1285,7 @@ void postProcess()
     }
 }
 
-void saveImg()
+int saveImg()
 {
     struct frame *f1;//frame object
     struct timespec frame_time;
@@ -1212,7 +1299,8 @@ void saveImg()
     {
         if( framecount++ > -1 ) //allow startup frames
         {
-            syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
+            //syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
+            syslog( LOG_CRIT, "[Frame Count: %d] [Image Capture Start Time: %6.9lf]\n", framecount, f1->image_capture_start_time );
 
             // dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
             dump_ppm( f1->rgb_frame, RGB_SIZE, framecount, &frame_time );
@@ -1223,4 +1311,6 @@ void saveImg()
             errno_exit("VIDIOC_QBUF");
         free_frame( f1 );
     }
+
+    return framecount;
 }

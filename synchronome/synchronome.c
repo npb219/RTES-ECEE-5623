@@ -107,6 +107,8 @@ double realtime(struct timespec *tsptr);
 
 //frame rate
 int speed = 1;
+//frame count desired
+int counts_desired = 180;
 
 
 // For background on high resolution time-stamps and clocks:
@@ -146,8 +148,9 @@ static inline unsigned ccnt_read (void)
 
 // Function to display help
 void print_usage() {
-    printf("Usage: ./synchronome [-s <speed>]\n");
+    printf("Usage: ./synchronome [-s <speed>] [-c <count>]\n");
     printf("   -s <speed>  Set capture speed (in 1 or 10 Hz)\n");
+    printf("   -c <count>  Set capture qty\n");
 }
 
 void main(int argc, char *argv[])
@@ -175,7 +178,7 @@ void main(int argc, char *argv[])
     int opt;
 
     // Parse command-line arguments
-    while ((opt = getopt(argc, argv, "s:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:c:")) != -1) {
         switch (opt) {
             case 's':  // -s option
                 speed = atoi(optarg);  // Convert argument to integer
@@ -184,6 +187,10 @@ void main(int argc, char *argv[])
                     print_usage();
                     exit(EXIT_FAILURE);
                 }
+                break;
+            case 'c':  // -c option
+                counts_desired = atoi(optarg);  // Convert argument to integer
+                
                 break;
 
             default:
@@ -194,6 +201,7 @@ void main(int argc, char *argv[])
 
     // Print the capture speed for verification
     printf("Capture speed set to %d Hz\n", speed);
+    printf("Capture count set to %d Hz\n", counts_desired);
 
     //start syslog
     openlog ("[COURSE:4][Final Project]", LOG_NDELAY, LOG_DAEMON); 
@@ -394,14 +402,16 @@ void Sequencer(int id)
         // Servcie_2 = RT_MAX-1	@ 20 Hz
         if((seqCnt % 5) == 1) sem_post(&semS2);
         // Servcie_3 = RT_MAX-2	@ 10 Hz
-        if((seqCnt % 10) == 1 ) sem_post(&semS3);
+        //if((seqCnt % 10) == 1 ) sem_post(&semS3);
+        if((seqCnt % 5) == 1 ) sem_post(&semS3);
         // Servcie_4 = RT_MAX-1	@ 10 Hz
-        if(((seqCnt) % 10) == 1 ) sem_post(&semS4);
+        //if(((seqCnt) % 10) == 1 ) sem_post(&semS4);
+        if(((seqCnt) % 5) == 1 ) sem_post(&semS4);
     }
 
 
     
-    if(abortTest || (seqCnt >= 3000))//sequencePeriods))
+    if(abortTest || (seqCnt >= 4000))//sequencePeriods))
     {
         // disable interval timer
         itime.it_interval.tv_sec = 0;
@@ -424,6 +434,9 @@ void *Service_1(void *threadp)
 {
     struct timespec current_time_val;
     double current_realtime;
+    double startread_realtime;
+    double stopread_realtime;
+    double diff_realtime;
     double start_proc_realtime;
     unsigned long long S1Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
@@ -439,14 +452,16 @@ void *Service_1(void *threadp)
         S1Cnt++;
 
         // on order of up to milliseconds of latency to get time
-        clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+        // clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
+        clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&current_time_val) - start_realtime;
 
 	    // capture frame
         capture();
         
-
+        clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
 	    
-        syslog(LOG_CRIT, "Thread 1 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        // syslog(LOG_CRIT, "Thread 1 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 1 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
     }
 
     // Resource shutdown here
@@ -459,6 +474,8 @@ void *Service_2(void *threadp)
 {
     struct timespec current_time_val;
     double current_realtime;
+    double startread_realtime;
+    double stopread_realtime;
     unsigned long long S2Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
 
@@ -468,11 +485,17 @@ void *Service_2(void *threadp)
     {
         sem_wait(&semS2);
         S2Cnt++;
+
+clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&current_time_val) - start_realtime;
+
         //diff image
         performDiff();
 
+clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
+
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        syslog(LOG_CRIT, "Thread 2 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        // syslog(LOG_CRIT, "Thread 2 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 2 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
     }
 
     pthread_exit((void *)0);
@@ -483,6 +506,8 @@ void *Service_3(void *threadp)
 {
     struct timespec current_time_val;
     double current_realtime;
+    double startread_realtime;
+    double stopread_realtime;
     unsigned long long S3Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
     double start_proc_realtime;
@@ -493,12 +518,17 @@ void *Service_3(void *threadp)
     {
         sem_wait(&semS3);
         S3Cnt++;
+
+clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&current_time_val) - start_realtime;
         
         //post process image
         postProcess();
 
+clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
+
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        syslog(LOG_CRIT, "Thread 3 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        // syslog(LOG_CRIT, "Thread 3 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 3 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
 
     }
 
@@ -509,6 +539,8 @@ void *Service_4(void *threadp)
 {
     struct timespec current_time_val;
     double current_realtime;
+    double startread_realtime;
+    double stopread_realtime;
     double start_proc_realtime;
     unsigned long long S4Cnt=0;
     threadParams_t *threadParams = (threadParams_t *)threadp;
@@ -523,12 +555,18 @@ void *Service_4(void *threadp)
 
         S4Cnt++;
 
+clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&current_time_val) - start_realtime;
+
 	    // save image
-        saveImg();
+        if( saveImg() == counts_desired + 1 )
+            abortTest = 1;
+
+clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
 
 	    // on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        syslog(LOG_CRIT, "Thread 4 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        // syslog(LOG_CRIT, "Thread 4 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 4 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
     }
 
     // Resource shutdown here

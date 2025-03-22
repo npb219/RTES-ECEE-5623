@@ -20,7 +20,9 @@ void performDiff();
 /// @brief checks for frame in post processing queue. If available, performs post process then puts new frame into save queue
 void postProcess();
 
+
 /// @brief saves available image in save queue
-void saveImg();
+/// @return number of frames saved
+int  saveImg();
 
 #endif
