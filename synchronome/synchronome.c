@@ -8,7 +8,7 @@
 // Service_1 - 5    Hz, every 20th Sequencer loop
 // Service_2 - 5    Hz, every 20th Sequencer loop
 // Service_3 - 1    Hz ,every 100th Sequencer loop
-// Service_3 - 1    Hz ,every 100th Sequencer loop
+// Service_4 - 1    Hz ,every 100th Sequencer loop
 //
 // With the above, priorities by RM policy would be:
 //
@@ -51,6 +51,7 @@
 #include <sys/time.h>
 #include <sys/sysinfo.h>
 #include <errno.h>
+#include <sys/utsname.h>
 
 #include <signal.h>
 
@@ -159,6 +160,9 @@ void main(int argc, char *argv[])
     struct timespec current_time_val, current_time_res;
     double current_realtime, current_realtime_res;
 
+    //log
+    struct utsname sys_info;
+
     int i, rc, scope, flags=0;
     //cpu params
     cpu_set_t threadcpu;
@@ -178,7 +182,7 @@ void main(int argc, char *argv[])
     int opt;
 
     // Parse command-line arguments
-    while ((opt = getopt(argc, argv, "s:c:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:c:l:d:")) != -1) {
         switch (opt) {
             case 's':  // set speed
                 speed = atoi(optarg);  // Convert argument to integer
@@ -191,6 +195,9 @@ void main(int argc, char *argv[])
             case 'c':  // set num captures
                 counts_desired = atoi(optarg);  // Convert argument to integer
                 
+                break;
+            case 'd': // save diff image
+                en_diff_img = ( atoi(optarg) != 0 );
                 break;
             case 'l': // enable laplace
                 en_laplace = ( atoi(optarg) != 0 );
@@ -211,7 +218,16 @@ void main(int argc, char *argv[])
 
     //start syslog
     openlog ("[COURSE:4][Final Project]", LOG_NDELAY, LOG_DAEMON); 
-    syslog(LOG_CRIT, argv[1]);
+    //syslog(LOG_CRIT, argv[1]);
+    // Run uname -a and capture the output
+    char buffer[256];
+    FILE *fp = popen("uname -a", "r");
+    if (fp) {
+        if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+            syslog(LOG_CRIT, "[COURSE:4][Final Project]: %s", buffer);
+        }
+        pclose(fp);
+    }
 
     //init camera
     init();
@@ -417,7 +433,7 @@ void Sequencer(int id)
 
 
     
-    if(abortTest)// || (seqCnt >= 4000))//sequencePeriods))
+    if(abortTest)
     {
         // disable interval timer
         itime.it_interval.tv_sec = 0;

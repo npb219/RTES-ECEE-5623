@@ -8,6 +8,9 @@ extern int speed_hz;
 /// @brief if not 0, laplace enabled, else rgb image only
 extern int en_laplace;
 
+/// @brief if not 0, save diff img, overridden by en_laplace
+extern int en_diff_img;
+
 /// @brief initialized camera, creates buffers for reads
 void init();
 

@@ -66,13 +66,9 @@ int speed_hz = 1;
 /// @brief if not 0, laplace enabled, else rgb image only
 int en_laplace = 0;
 
-static int frames_per_sec = 2;
+/// @brief if not 0, save diff img, overridden by en_laplace
+int en_diff_img = 0;
 
-#define COLOR_CONVERT_RGB //color convert image
-#define DUMP_FRAMES //save frames
-#define DUMP_PPM //save with color pixels
-//#define TRANSFORM_IMG //apply laplace
-#define DIFF //apply diff
 
 #define BUFFER_SIZE 10  // circular buffer max size
 
@@ -117,9 +113,9 @@ struct circular_buffer {
     pthread_mutex_t mutex; // Mutex for thread safety
 };
 
-static struct circular_buffer new_frame_cb;
-static struct circular_buffer post_proc_cb;
-static struct circular_buffer save_frame_cb;
+static struct circular_buffer new_frame_cb; //new captured frame circ buf
+static struct circular_buffer post_proc_cb; //unique (diffed) image to be post processed circ buf
+static struct circular_buffer save_frame_cb; //post processed image - to be saved circ buf
 
 static char            *dev_name;               //device name
 static enum io_method   io = IO_METHOD_MMAP;    //memory mapped reads
@@ -128,7 +124,6 @@ struct buffer          *buffers;                //memory mapped buffers for new 
 static unsigned int     n_buffers;              //number of buffers allocated
 static int              force_format=1;         //force format of images from camera
 
-static int              frame_count = (FRAMES_TO_ACQUIRE);      //frame count to acquire
 static int              framecount = 0;                         //current frame count acquired and saved
 static int              captured_frames = -START_UP_FRAMES;     //current frames captured
 
@@ -460,169 +455,6 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
 }
 
-// always ignore first framecnt frames
-int framecnt=-START_UP_FRAMES;
-//scratchpad buffer for conversion
-unsigned char bigbuffer[(1280*960)];
-
-unsigned char last_image[(1280*960)]; //buffer for previous image
-unsigned char diff_image[(1280*960)]; //buffer for diff'd image
-
-//process the image
-static void process_image(const void *p, int size)
-{
-    int i, newi, newsize=0;
-    struct timespec frame_time;
-    int y_temp, y2_temp, u_temp, v_temp;
-    unsigned char *pptr = (unsigned char *)p;
-
-    // record when process was called
-    clock_gettime(CLOCK_REALTIME, &frame_time);    
-
-    framecnt++;
-    //printf("frame %d: ", framecnt);
-    
-    if(framecnt == 0) 
-    {
-        clock_gettime(CLOCK_MONOTONIC, &time_start);
-        fstart = (double)time_start.tv_sec + (double)time_start.tv_nsec / 1000000000.0;
-    }
-
-#ifdef DUMP_FRAMES	
-
-    // This just dumps the frame to a file now, but you could replace with whatever image
-    // processing you wish.
-    //
-
-    if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) //we are using this one
-    {
-
-#if defined(COLOR_CONVERT_RGB)
-       
-        // Pixels are YU and YV alternating, so YUYV which is 4 bytes
-        // We want RGB, so RGBRGB which is 6 bytes
-        //
-        for(i=0, newi=0; i<size; i=i+4, newi=newi+6)
-        {
-            y_temp=(int)pptr[i]; u_temp=(int)pptr[i+1]; y2_temp=(int)pptr[i+2]; v_temp=(int)pptr[i+3];
-            yuv2rgb(y_temp, u_temp, v_temp, &bigbuffer[newi], &bigbuffer[newi+1], &bigbuffer[newi+2]);
-            yuv2rgb(y2_temp, u_temp, v_temp, &bigbuffer[newi+3], &bigbuffer[newi+4], &bigbuffer[newi+5]);
-        }
-
-#endif
-
-
-#if defined(DUMP_PPM)
-        if(framecnt > -1) 
-        {
-            dump_ppm(bigbuffer, ((size*6)/4), framecnt, &frame_time);
-            //printf("Dump YUYV converted to RGB size %d\n", size);
-        }
-#else
-      
-        // Pixels are YU and YV alternating, so YUYV which is 4 bytes
-        // We want Y, so YY which is 2 bytes
-        //
-        for(i=0, newi=0; i<size; i=i+4, newi=newi+2)
-        {
-            // Y1=first byte and Y2=third byte
-            bigbuffer[newi]=pptr[i];
-            bigbuffer[newi+1]=pptr[i+2];
-        }
-
-        if(framecnt > -1)
-        {
-            dump_pgm(bigbuffer, (size/2), framecnt, &frame_time);
-            //printf("Dump YUYV converted to YY size %d\n", size);
-        }
-#endif
-
-#if defined(TRANSFORM_IMG)
-    if(framecnt > -1) 
-    {
-        int width = 1280; //buffer size allocation
-        int height = 960;
-
-        // Create buffer for grayscale (Y channel)
-        unsigned char *y_plane = malloc(width * height);
-        if (!y_plane) {
-            perror("Failed to allocate memory for Y plane");
-            exit(EXIT_FAILURE);
-        }
-
-        // Extract Y component (grayscale image)
-        for (i = 0, newi = 0; i < size; i += 4, newi += 2) {
-            // Y1 = first byte, Y2 = third byte
-            y_plane[newi] = pptr[i];     // First Y
-            y_plane[newi + 1] = pptr[i + 2]; // Second Y
-        }
-
-        // Allocate buffer for the Laplacian output
-        unsigned char *laplacian_output = malloc(width * height);
-        if (!laplacian_output) {
-            perror("Failed to allocate memory for Laplacian output");
-            free(y_plane);
-            exit(EXIT_FAILURE);
-        }
-
-        // Apply Laplacian edge detection
-        apply_laplacian(y_plane, laplacian_output, width, height);
-
-        // for (int i = 0; i < width * height; i++) {
-        //     laplacian_output[i] = 255 - laplacian_output[i];  // Invert pixel intensity
-        // }
-
-        // Save as a PGM image (for visualization/debugging)
-        dump_pgm(laplacian_output, width * height, framecnt, &frame_time);
-
-        free(y_plane);
-        free(laplacian_output);
-    }
-#endif
-
-#if defined(DIFF)
-    //test time: start
-    clock_gettime(CLOCK_MONOTONIC, &time1);
-    t1 = (double)time1.tv_sec + (double)time1.tv_nsec / 1000000000.0;
-
-    //get grey scale image
-    for(i=0, newi=0; i<size; i=i+4, newi=newi+2)
-    {
-        // Y1=first byte and Y2=third byte
-        bigbuffer[newi]=pptr[i];
-        bigbuffer[newi+1]=pptr[i+2];
-    }
-
-    //test time: end
-    clock_gettime(CLOCK_MONOTONIC, &time2);
-    t2 = (double)time2.tv_sec + (double)time2.tv_nsec / 1000000000.0;
-    syslog(LOG_CRIT, "TIMETRACE: read time %lf\n", (t2-t1));
-
-    if(framecnt > -1)
-    {
-        //diff images
-        detect_motion(last_image, bigbuffer, size, diff_image);
-
-        //save diffed image as greyscale
-        dump_pgm(diff_image, (size/2), framecnt, &frame_time);
-    }
-
-    //copy new image
-    memcpy(last_image, bigbuffer, size);
-#endif
-
-    }
-
-    else
-    {
-        printf("ERROR - unknown dump format\n");
-    }
-
-#endif
-
-}
-
-
 
 /// @brief applies rgb to image at *p and saves to *rgb_img with size 640x480x3 max
 /// @param p orignal frame from camera location
@@ -734,116 +566,12 @@ static int read_frame(void)
     apply_grayscale(buffers[f1->buf->index].start, f1->buf->bytesused, f1->gray_frame);
     //add new frame to new frame buffer
     add_to_buffer(&new_frame_cb, f1);
-    
-    // //process the image
-    // process_image(buffers[buf.index].start, buf.bytesused);
-    // //release (queue buffer) image buffer back to camera for further use
-    // if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
-    //         errno_exit("VIDIOC_QBUF");
 
     return 1;
 }
 
 
-static void mainloop(void)
-{
-    unsigned int count;
-    struct timespec read_delay;
-    struct timespec time_error;
 
-    
-#if (FRAMES_PER_SEC  == 1)
-    printf("Running at 1 frame/sec\n");
-    read_delay.tv_sec=1;
-    read_delay.tv_nsec=0;
-#elif (FRAMES_PER_SEC == 2)
-    printf("Running at 2 frames/sec\n");
-    read_delay.tv_sec=0;
-    read_delay.tv_nsec=500000000;
-#elif (FRAMES_PER_SEC == 10)
-    printf("Running at 10 frames/sec\n");
-    read_delay.tv_sec=0;
-    read_delay.tv_nsec=100000000;
-#elif (FRAMES_PER_SEC == 20)
-    printf("Running at 20 frames/sec\n");
-    read_delay.tv_sec=0;
-    read_delay.tv_nsec=49625000;
-#elif (FRAMES_PER_SEC == 25)
-    printf("Running at 25 frames/sec\n");
-    read_delay.tv_sec=0;
-    read_delay.tv_nsec=39625000;
-#elif (FRAMES_PER_SEC == 30)
-    printf("Running at 30 frames/sec\n");
-    read_delay.tv_sec=0;
-    read_delay.tv_nsec=33333333;
-#else
-    printf("Running at 1 frame/sec\n");
-    read_delay.tv_sec=1;
-    read_delay.tv_nsec=0;
-#endif
-
-    count = frame_count;
-
-    while (count > 0)
-    {
-        for (;;)
-        {
-            fd_set fds;
-            struct timeval tv;
-            int r;
-
-            FD_ZERO(&fds);
-            FD_SET(fd, &fds);
-
-            /* Timeout. */
-            tv.tv_sec = 2;
-            tv.tv_usec = 0;
-
-            r = select(fd + 1, &fds, NULL, NULL, &tv); //get file descripter
-            //error handle
-            if (-1 == r)
-            {
-                if (EINTR == errno)
-                    continue;
-                errno_exit("select");
-            }
-
-            if (0 == r)
-            {
-                fprintf(stderr, "select timeout\n");
-                exit(EXIT_FAILURE);
-            }
-            //read frame
-            if (read_frame())
-            {
-                if(nanosleep(&read_delay, &time_error) != 0) //wait read period
-                    perror("nanosleep");
-                else
-                {
-                    if(framecnt > 1) //log
-                    {	
-                        clock_gettime(CLOCK_MONOTONIC, &time_now);
-                        fnow = (double)time_now.tv_sec + (double)time_now.tv_nsec / 1000000000.0;
-                                //printf("REPLACE read at %lf, @ %lf FPS\n", (fnow-fstart), (double)(framecnt+1) / (fnow-fstart));
-                                syslog(LOG_CRIT, "SIMPCAP: read at %lf, @ %lf FPS\n", (fnow-fstart), (double)(framecnt+1) / (fnow-fstart));
-                    }
-                }
-
-                count--;
-                break;
-            }
-
-            /* EAGAIN - continue select loop unless count done. */
-            if(count <= 0) break;
-        }
-
-        if(count <= 0) break;
-    }
-
-    clock_gettime(CLOCK_MONOTONIC, &time_stop);
-    fstop = (double)time_stop.tv_sec + (double)time_stop.tv_nsec / 1000000000.0;
-
-}
 //stop capturing
 static void stop_capturing(void)
 {
@@ -1185,8 +913,7 @@ void performDiff()
         {
             //syslog( LOG_CRIT, "S2 toss @ sec=%6.9lf\n", current_realtime-start_realtime );
             //copy current to previous
-            //if( speed_hz == 1 )
-                memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
             
             //release (queue buffer) image buffer back to camera for further use
             if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
@@ -1194,75 +921,6 @@ void performDiff()
             //release frame - will not use further
             free_frame( f1 );
         }
-
-        // if( captured_frames++ > -1 )
-        // {
-        //     if( detect_motion( f2->gray_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) ) //frame change, might still be moving
-        //     {
-        //         diff_cnt++;
-        //         same_cnt = 0;
-        //     }
-        //     else //frame didnt change
-        //     {
-        //         same_cnt++;
-        //         diff_cnt = 0;
-        //     }
-
-        //     if( same_cnt == 1 ) //found first static image
-        //     {
-        //         if( f2 != NULL && f2->in_buffer == 0 )
-        //         {
-        //             //release (queue buffer) image buffer back to camera for further use
-        //             if (-1 == xioctl(fd, VIDIOC_QBUF, f2->buf))
-        //                 errno_exit("VIDIOC_QBUF");
-        //             //release frame - will not use further
-        //             free_frame( f2 );
-        //         }
-
-        //         //add to post process buffer
-        //         f1->in_buffer = 1;
-        //         add_to_buffer( &post_proc_cb, f1 );
-
-        //         f2 = f1;
-        //     }
-        //     else if( diff_cnt == 2 )// if second in a row changing image, try to capture last
-        //     {
-        //         //add to post process buffer
-        //         f2->in_buffer = 1;
-        //         add_to_buffer( &post_proc_cb, f2 );
-
-        //         f2 = f1;
-        //     }
-        //     else
-        //     {
-        //         if( f2 != NULL && f2->in_buffer == 0 )
-        //         {
-        //             //release (queue buffer) image buffer back to camera for further use
-        //             if (-1 == xioctl(fd, VIDIOC_QBUF, f2->buf))
-        //                 errno_exit("VIDIOC_QBUF");
-        //             //release frame - will not use further
-        //             free_frame( f2 );
-        //         }
-
-        //         //copy current to previous
-        //         f2 = f1;
-        //     }
-        // }
-        // else
-        // {
-        //     if( f2 != NULL )
-        //     {
-        //         if( f2->buf->bytesused )
-        //         //release (queue buffer) image buffer back to camera for further use
-        //         if (-1 == xioctl(fd, VIDIOC_QBUF, f2->buf))
-        //             errno_exit("VIDIOC_QBUF");
-        //         //release frame - will not use further
-        //         free_frame( f2 );
-        //     }
-
-        //     //copy current to previous
-        //     f2 = f1;
-        // }
     }
 }
 
@@ -1313,6 +971,8 @@ int saveImg()
         //save laplace if enabled
         if( en_laplace )
             dump_pgm( f1->laplace_frame, GRAY_SIZE, framecount, &frame_time );
+        else if( en_diff_img ) //or save diff frame
+            dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
         
         //release (queue buffer) image buffer back to camera for further use
         if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
