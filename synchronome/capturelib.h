@@ -5,6 +5,9 @@
 /// @brief desired speed in hz
 extern int speed_hz;
 
+/// @brief if not 0, laplace enabled, else rgb image only
+extern int en_laplace;
+
 /// @brief initialized camera, creates buffers for reads
 void init();
 

@@ -63,6 +63,9 @@
 /// @brief desired speed in hz
 int speed_hz = 1;
 
+/// @brief if not 0, laplace enabled, else rgb image only
+int en_laplace = 0;
+
 static int frames_per_sec = 2;
 
 #define COLOR_CONVERT_RGB //color convert image
@@ -126,7 +129,7 @@ static unsigned int     n_buffers;              //number of buffers allocated
 static int              force_format=1;         //force format of images from camera
 
 static int              frame_count = (FRAMES_TO_ACQUIRE);      //frame count to acquire
-static int              framecount = 0;                         //current frame count acquired
+static int              framecount = 0;                         //current frame count acquired and saved
 static int              captured_frames = -START_UP_FRAMES;     //current frames captured
 
 static unsigned char prev_frame[GRAY_SIZE];     //previous image - used by service 2 only - grayscaled
@@ -448,7 +451,7 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
     printf("different pixes: %d\n", non_zero_count);
     // If there are significant differences, consider motion detected
-    if ( non_zero_count > ( ( speed_hz == 10 ) ? 1000 : 900 ) ) {  // more than 800 of pixels differ (found by test)
+    if ( non_zero_count > ( ( speed_hz == 10 ) ? 1000 : 600 ) ) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -1182,7 +1185,7 @@ void performDiff()
         {
             //syslog( LOG_CRIT, "S2 toss @ sec=%6.9lf\n", current_realtime-start_realtime );
             //copy current to previous
-            if( speed_hz == 1 )
+            //if( speed_hz == 1 )
                 memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
             
             //release (queue buffer) image buffer back to camera for further use
@@ -1280,6 +1283,10 @@ void postProcess()
         //apply rgb to image
         apply_rgb( buffers[f1->buf->index].start, f1->buf->bytesused, f1->rgb_frame );
 
+        //apply laplace if enabled
+        if( en_laplace )
+            apply_laplacian( f1->gray_frame, f1->laplace_frame, 640, 480 );
+
         //add to save buffer
         add_to_buffer( &save_frame_cb, f1 );
     }
@@ -1297,19 +1304,22 @@ int saveImg()
     f1 = remove_from_buffer( &save_frame_cb );
     if( f1!=NULL )
     {
-        if( framecount++ > -1 ) //allow startup frames
-        {
-            //syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
-            syslog( LOG_CRIT, "[Frame Count: %d] [Image Capture Start Time: %6.9lf]\n", framecount, f1->image_capture_start_time );
+        //syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
+        syslog( LOG_CRIT, "[Frame Count: %d][Image Capture Start Time: %6.9lf]\n", framecount, f1->image_capture_start_time );
 
-            // dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
-            dump_ppm( f1->rgb_frame, RGB_SIZE, framecount, &frame_time );
-        }
+        // dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
+        dump_ppm( f1->rgb_frame, RGB_SIZE, framecount, &frame_time );
+
+        //save laplace if enabled
+        if( en_laplace )
+            dump_pgm( f1->laplace_frame, GRAY_SIZE, framecount, &frame_time );
         
         //release (queue buffer) image buffer back to camera for further use
         if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
             errno_exit("VIDIOC_QBUF");
         free_frame( f1 );
+
+        framecount++;
     }
 
     return framecount;

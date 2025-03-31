@@ -178,9 +178,9 @@ void main(int argc, char *argv[])
     int opt;
 
     // Parse command-line arguments
-    while ((opt = getopt(argc, argv, "s:c:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:c:l:")) != -1) {
         switch (opt) {
-            case 's':  // -s option
+            case 's':  // set speed
                 speed = atoi(optarg);  // Convert argument to integer
                 if (speed != 1 && speed != 10) {
                     fprintf(stderr, "Error: Speed must be 1 (default) or 10hz.\n");
@@ -188,11 +188,13 @@ void main(int argc, char *argv[])
                     exit(EXIT_FAILURE);
                 }
                 break;
-            case 'c':  // -c option
+            case 'c':  // set num captures
                 counts_desired = atoi(optarg);  // Convert argument to integer
                 
                 break;
-
+            case 'l': // enable laplace
+                en_laplace = ( atoi(optarg) != 0 );
+                break;
             default:
                 print_usage();
                 exit(EXIT_FAILURE);
@@ -202,6 +204,10 @@ void main(int argc, char *argv[])
     // Print the capture speed for verification
     printf("Capture speed set to %d Hz\n", speed);
     printf("Capture count set to %d Hz\n", counts_desired);
+    if( en_laplace )
+        printf("Enable laplace xfrm!");
+
+    speed_hz = speed;
 
     //start syslog
     openlog ("[COURSE:4][Final Project]", LOG_NDELAY, LOG_DAEMON); 
@@ -411,7 +417,7 @@ void Sequencer(int id)
 
 
     
-    if(abortTest || (seqCnt >= 4000))//sequencePeriods))
+    if(abortTest)// || (seqCnt >= 4000))//sequencePeriods))
     {
         // disable interval timer
         itime.it_interval.tv_sec = 0;
@@ -558,7 +564,7 @@ void *Service_4(void *threadp)
 clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&current_time_val) - start_realtime;
 
 	    // save image
-        if( saveImg() == counts_desired + 1 )
+        if( saveImg() == counts_desired )
             abortTest = 1;
 
 clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
