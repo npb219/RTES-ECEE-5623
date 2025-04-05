@@ -126,6 +126,7 @@ static int              force_format=1;         //force format of images from ca
 
 static int              framecount = 0;                         //current frame count acquired and saved
 static int              captured_frames = -START_UP_FRAMES;     //current frames captured
+static int              diff_sync = 0;                          //counter to sync diff function
 
 static unsigned char prev_frame[GRAY_SIZE];     //previous image - used by service 2 only - grayscaled
 
@@ -429,7 +430,7 @@ static void apply_laplacian(const unsigned char *input, unsigned char *output, i
 /// @param diffed_img ptr to save diffed image
 /// @return 1 if different, 0 otherwise
 static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img) {
-    int threshold = ( speed_hz == 10 ) ? 27 : 35;//10;  // Example threshold to ignore small differences
+    int threshold = ( speed_hz == 10 ) ? 69 : 34;//10;  // threshold to ignore small differences
     int non_zero_count = 0;
     
     // Subtract images
@@ -446,7 +447,7 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
     printf("different pixes: %d\n", non_zero_count);
     // If there are significant differences, consider motion detected
-    if ( non_zero_count > ( ( speed_hz == 10 ) ? 1000 : 600 ) ) {  // more than 800 of pixels differ (found by test)
+    if ( non_zero_count > ( ( speed_hz == 10 ) ? 700 : 430 ) ) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -837,6 +838,8 @@ void init()
     //set start time
     clock_gettime(CLOCK_REALTIME, &start_time_val);
     start_realtime=realtime(&start_time_val);
+
+    diff_sync = 0;
 }
 
 void uninit()
@@ -884,10 +887,8 @@ void performDiff()
     static int diff_cnt = 0;
     static int same_cnt = 0;
     
+    
     struct frame *f1;//frame object
-    static struct frame *f2;//last frame object
-    if(f2==NULL)
-        f2 = create_frame();
 
     struct timespec frame_time;
     double current_realtime;
@@ -898,10 +899,33 @@ void performDiff()
     f1 = remove_from_buffer( &new_frame_cb );
     if( f1!=NULL )
     {
+        if( ( captured_frames++ > -1 ) && ( diff_sync < (( speed_hz == 10 ) ? 30 : 5) ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
+        {
+            diff_sync++;
+            //copy current to previous
+            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+            
+            //release (queue buffer) image buffer back to camera for further use
+            if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                errno_exit("VIDIOC_QBUF");
+            //release frame - will not use further
+            free_frame( f1 );
+        }
         //check frame counter for throwaway. doing here so we still load the diff pipeline
         //then detect motion
-        if( ( captured_frames++ > -1 ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
+        else if( ( captured_frames > -1 ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
         {
+            
+
+            // if(!diff_sync)
+            // {
+            //     //set start time
+            //     clock_gettime(CLOCK_REALTIME, &start_time_val);
+            //     start_realtime=realtime(&start_time_val);
+            //     diff_sync = 1;
+            // }
+            // f1->image_capture_start_time = current_realtime-start_realtime;
+
             //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
             //copy current to previous
             memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );

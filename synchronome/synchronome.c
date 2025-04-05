@@ -218,13 +218,13 @@ void main(int argc, char *argv[])
 
     //start syslog
     openlog ("[COURSE:4][Final Project]", LOG_NDELAY, LOG_DAEMON); 
-    //syslog(LOG_CRIT, argv[1]);
+    syslog(LOG_CRIT, argv[1]);
     // Run uname -a and capture the output
     char buffer[256];
     FILE *fp = popen("uname -a", "r");
     if (fp) {
         if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-            syslog(LOG_CRIT, "[COURSE:4][Final Project]: %s", buffer);
+            syslog(LOG_CRIT, "%s", buffer);
         }
         pclose(fp);
     }
