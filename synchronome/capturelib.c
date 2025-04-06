@@ -70,7 +70,7 @@ int en_laplace = 0;
 int en_diff_img = 0;
 
 
-#define BUFFER_SIZE 10  // circular buffer max size
+#define BUFFER_SIZE 15  // circular buffer max size
 
 // Format is used by a number of functions, so made as a file global
 static struct v4l2_format fmt;
@@ -129,6 +129,9 @@ static int              captured_frames = -START_UP_FRAMES;     //current frames
 static int              diff_sync = 0;                          //counter to sync diff function
 
 static unsigned char prev_frame[GRAY_SIZE];     //previous image - used by service 2 only - grayscaled
+
+static unsigned char change_map[GRAY_SIZE]; //mask of tenths and hundredths of seconds for 10hz
+int min_x = HRES, max_x = 0, min_y = VRES, max_y = 0;
 
 //time keeping variables for logging
 static double fnow=0.0, fstart=0.0, fstop=0.0;
@@ -200,6 +203,7 @@ static int add_to_buffer(struct circular_buffer *cb, struct frame *f) {
 
     if (cb->count == BUFFER_SIZE) {
         printf("Buffer full, cannot add frame.\n");
+        syslog( LOG_CRIT, "Buffer full, cannot add frame.\n" );
         pthread_mutex_unlock(&cb->mutex);
         return -1;  // Buffer full
     }
@@ -429,8 +433,8 @@ static void apply_laplacian(const unsigned char *input, unsigned char *output, i
 /// @param size size of image (bytes)
 /// @param diffed_img ptr to save diffed image
 /// @return 1 if different, 0 otherwise
-static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img) {
-    int threshold = ( speed_hz == 10 ) ? 69 : 34;//10;  // threshold to ignore small differences
+static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img, int threshold) {
+    //int threshold = ( speed_hz == 10 ) ? 30/*59*//*150*//*69*/ : 34;//10;  // threshold to ignore small differences
     int non_zero_count = 0;
     
     // Subtract images
@@ -445,9 +449,10 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
             non_zero_count++;
         }
     }
-    printf("different pixes: %d\n", non_zero_count);
+    printf("img %d | different pixes: %d\n", framecount, non_zero_count);
+    //syslog( LOG_CRIT, "img %d | different pixes: %d\n", framecount, non_zero_count ); //diff display
     // If there are significant differences, consider motion detected
-    if ( non_zero_count > ( ( speed_hz == 10 ) ? 700 : 430 ) ) {  // more than 800 of pixels differ (found by test)
+    if ( non_zero_count > 350/*100*/){//( ( speed_hz == 10 ) ? 700 : 430 ) ) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -456,6 +461,51 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     }
 }
 
+static int detect_motion_masked(
+    unsigned char *prev_img,
+    unsigned char *curr_img,
+    int width,              
+    int height,             //bounds checking
+    int size,
+    unsigned char *diffed_img,
+    int threshold,
+    int min_x, int max_x,   
+    int min_y, int max_y    
+) {
+    int non_zero_count = 0;
+
+    for (int i = 0; i < size; ++i) {
+        int x = i % width;
+        int y = i / width;
+
+        // Check if this pixel is inside the ignore region
+        if (x >= min_x && x <= max_x && y >= min_y && y <= max_y) {
+            diffed_img[i] = 0;  // ignore difference in this region
+        } else {
+            int diff = abs(curr_img[i] - prev_img[i]);
+            //diffed_img[i] = (diff > threshold) ? 255 : 0;
+            if(diff > threshold)
+            {
+                diffed_img[i] = 255;
+                non_zero_count++;
+            }
+            else
+            {
+                diffed_img[i] = 0;
+            }
+        }
+    }
+
+    // for (int i = 0; i < size; ++i) {
+    //     if (diffed_img[i] != 0) {
+    //         non_zero_count++;
+    //     }
+    // }
+
+    printf("img %d | different pixes: %d\n", framecount, non_zero_count);
+
+    return (non_zero_count > 300) ? 1 : 0;
+}
 
 /// @brief applies rgb to image at *p and saves to *rgb_img with size 640x480x3 max
 /// @param p orignal frame from camera location
@@ -625,7 +675,7 @@ static void init_mmap(void)
 
     CLEAR(req);
 
-    req.count = 12; //allocate 6 buffers for reading
+    req.count = 14; //allocate 6 buffers for reading
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; //of type video capture
     req.memory = V4L2_MEMORY_MMAP; //memory map type memory
 
@@ -899,46 +949,128 @@ void performDiff()
     f1 = remove_from_buffer( &new_frame_cb );
     if( f1!=NULL )
     {
-        if( ( captured_frames++ > -1 ) && ( diff_sync < (( speed_hz == 10 ) ? 30 : 5) ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
+        if( ( captured_frames++ > -1 ) )
         {
-            diff_sync++;
-            //copy current to previous
-            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
-            
-            //release (queue buffer) image buffer back to camera for further use
-            if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                errno_exit("VIDIOC_QBUF");
-            //release frame - will not use further
-            free_frame( f1 );
-        }
-        //check frame counter for throwaway. doing here so we still load the diff pipeline
-        //then detect motion
-        else if( ( captured_frames > -1 ) && detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame ) )
-        {
-            
+            if( diff_sync < 8 ) //use first 8 frames (found by test) to mask of lsb's
+            {
+                if( detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame, 20 ) ) //change detected
+                {
+                    if( diff_sync == 0 )//first frame - toss
+                    {
+                        //copy current to previous
+                        memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
-            // if(!diff_sync)
-            // {
-            //     //set start time
-            //     clock_gettime(CLOCK_REALTIME, &start_time_val);
-            //     start_realtime=realtime(&start_time_val);
-            //     diff_sync = 1;
-            // }
-            // f1->image_capture_start_time = current_realtime-start_realtime;
+                        //release (queue buffer) image buffer back to camera for further use
+                        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                            errno_exit("VIDIOC_QBUF");
+                        //release frame - will not use further
+                        free_frame( f1 );
+                        diff_sync++;
+                    }
+                    else if( diff_sync < 7 && diff_sync > 0 )//use frams 1-6 to find least significant digits
+                    {
+                        //update change map
+                        for( int i = 0; i < GRAY_SIZE; i++ )
+                        {
+                            if( f1->diff_frame[i] == 0xFF )
+                                change_map[i]++;
+                        }
 
-            //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
-            //copy current to previous
-            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+                        //copy current to previous
+                        memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
-            //add to post process buffer
-            add_to_buffer( &post_proc_cb, f1 );
+                        //toss
+                        //release (queue buffer) image buffer back to camera for further use
+                        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                            errno_exit("VIDIOC_QBUF");
+                        //release frame - will not use further
+                        free_frame( f1 );
+
+                        // //add to post process buffer - remove
+                        // add_to_buffer( &post_proc_cb, f1 );
+
+                        // find bounding box of all "high change" pixels
+                        if( diff_sync == 6 )
+                        {
+                            for (int y = 0; y < VRES; ++y) {
+                                for (int x = 0; x < HRES; ++x) {
+                                    int idx = y * HRES + x;
+                                    if (change_map[idx] > 4) {
+                                        if (x < min_x) min_x = x;
+                                        if (x > max_x) max_x = x;
+                                        if (y < min_y) min_y = y;
+                                        if (y > max_y) max_y = y;
+                                    }
+                                }
+                            }
+                            printf(" min_x: %d\n", min_x);
+                            printf(" max_x: %d\n", max_x);
+                            printf(" min_y: %d\n", min_y);
+                            printf(" max_y: %d\n", max_y);
+
+                        }
+
+                        diff_sync++;
+                    }
+                    else if( diff_sync == 7 )
+                    {
+                        diff_sync++;
+                        for (int y = min_y; y <= max_y; ++y) {
+                            for (int x = min_x; x <= max_x; ++x) {
+                                f1->diff_frame[y * HRES + x] = 255; // white in PGM
+                            }
+                        }
+
+                        //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
+                        //copy current to previous
+                        memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+
+                        //toss
+                        //release (queue buffer) image buffer back to camera for further use
+                        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                            errno_exit("VIDIOC_QBUF");
+                        //release frame - will not use further
+                        free_frame( f1 );
+
+                        // //add to post process buffer
+                        // add_to_buffer( &post_proc_cb, f1 );
+                    }
+                }
+                else //no change - toss
+                {
+                    //release (queue buffer) image buffer back to camera for further use
+                    if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                        errno_exit("VIDIOC_QBUF");
+                    //release frame - will not use further
+                    free_frame( f1 );
+                }
+            }
+            else //normal operation
+            {
+                if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 135/*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
+                {
+                    //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
+                    //copy current to previous
+                    memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+
+                    //add to post process buffer
+                    add_to_buffer( &post_proc_cb, f1 );
+                }
+                else//not different - toss
+                {
+                    //copy current to previous
+                   // memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+
+                    //release (queue buffer) image buffer back to camera for further use
+                    if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
+                        errno_exit("VIDIOC_QBUF");
+                    //release frame - will not use further
+                    free_frame( f1 );
+                }
+            }
         }
         else
         {
-            //syslog( LOG_CRIT, "S2 toss @ sec=%6.9lf\n", current_realtime-start_realtime );
-            //copy current to previous
-            memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
-            
             //release (queue buffer) image buffer back to camera for further use
             if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
                 errno_exit("VIDIOC_QBUF");
@@ -980,8 +1112,8 @@ int saveImg()
     struct timespec frame_time;
     double current_realtime;
     // record when process was called
-    clock_gettime( CLOCK_REALTIME, &frame_time );
-    current_realtime = realtime( &frame_time );
+    // clock_gettime( CLOCK_REALTIME, &frame_time );
+    // current_realtime = realtime( &frame_time );
 
     f1 = remove_from_buffer( &save_frame_cb );
     if( f1!=NULL )

@@ -218,7 +218,7 @@ void main(int argc, char *argv[])
 
     //start syslog
     openlog ("[COURSE:4][Final Project]", LOG_NDELAY, LOG_DAEMON); 
-    syslog(LOG_CRIT, argv[1]);
+    //syslog(LOG_CRIT, argv[1]);
     // Run uname -a and capture the output
     char buffer[256];
     FILE *fp = popen("uname -a", "r");
@@ -425,10 +425,10 @@ void Sequencer(int id)
         if((seqCnt % 5) == 1) sem_post(&semS2);
         // Servcie_3 = RT_MAX-2	@ 10 Hz
         //if((seqCnt % 10) == 1 ) sem_post(&semS3);
-        if((seqCnt % 5) == 1 ) sem_post(&semS3);
+        if((seqCnt % 10) == 1 ) sem_post(&semS3);
         // Servcie_4 = RT_MAX-1	@ 10 Hz
         //if(((seqCnt) % 10) == 1 ) sem_post(&semS4);
-        if(((seqCnt) % 5) == 1 ) sem_post(&semS4);
+        if((seqCnt % 10) == 1 ) sem_post(&semS4);
     }
 
 
