@@ -53,6 +53,7 @@
 #define VRES_STR "480"
 #define GRAY_SIZE (640*480) //only contains light intensity component - 1 byte per pixel
 #define RGB_SIZE (640*480*3)//rgb has 3 bytes per pixel
+#define ORIG_SIZE (640*480*2)//614400 original frame yuyv size from camera
 
 #define START_UP_FRAMES (26) //found by test
 #define LAST_FRAMES (1)
@@ -95,13 +96,13 @@ struct buffer
 //frame object
 struct frame
 {
-    struct v4l2_buffer *buf;                //original camera frame
+    unsigned char buf[ORIG_SIZE];           //original camera frame
     unsigned char gray_frame[GRAY_SIZE];    //gray scaled image frame
     unsigned char rgb_frame[RGB_SIZE];      //rgb applied frame
     unsigned char diff_frame[GRAY_SIZE];    //gray scaled diffed image frame
     unsigned char laplace_frame[GRAY_SIZE]; //laplace applied frame
     double image_capture_start_time;        //capture time
-    int in_buffer;
+    int bytesused;                          //size of original frame
 };
 
 // Circular buffer structure
@@ -116,6 +117,19 @@ struct circular_buffer {
 static struct circular_buffer new_frame_cb; //new captured frame circ buf
 static struct circular_buffer post_proc_cb; //unique (diffed) image to be post processed circ buf
 static struct circular_buffer save_frame_cb; //post processed image - to be saved circ buf
+
+#define FRAME_POOL_SIZE 16 //frame pool - to avoid malloc/free
+
+struct frame_pool {
+    struct frame* frames[FRAME_POOL_SIZE];
+    int head;
+    int tail;
+    int count;
+    pthread_mutex_t lock;
+    pthread_cond_t available;
+};
+
+static struct frame_pool g_frame_pool;
 
 static char            *dev_name;               //device name
 static enum io_method   io = IO_METHOD_MMAP;    //memory mapped reads
@@ -176,17 +190,9 @@ static void init_circular_buffer(struct circular_buffer *cb) {
 
 // create and initialize a frame
 static struct frame *create_frame() {
-    struct frame *new_frame = malloc(sizeof(struct frame));
+    struct frame *new_frame = calloc(1, sizeof(struct frame));  // zeroes all fields
     if (!new_frame) {
         perror("Failed to allocate frame");
-        exit(EXIT_FAILURE);
-    }
-
-    // Allocate memory for image frames
-    new_frame->buf = malloc(sizeof(struct v4l2_buffer));
-    if (!new_frame->buf) {
-        perror("Failed to allocate memory for v4l2_buffer");
-        free(new_frame);  // free the frame memory before exiting
         exit(EXIT_FAILURE);
     }
 
@@ -241,7 +247,6 @@ struct frame *remove_from_buffer(struct circular_buffer *cb) {
 /// @param f 
 static void free_frame(struct frame *f) {
     if (!f) return;
-    free(f->buf);  // free the allocated buffer
     free(f);       // free the frame object
 }
 
@@ -256,6 +261,71 @@ static void free_circular_buffer(struct circular_buffer *cb) {
 }
 
 /////////////////////////// end circular buffer ///////////////////////////
+
+/////////////////////////// frame pool ///////////////////////////
+struct frame* get_free_frame() {
+    pthread_mutex_lock(&g_frame_pool.lock);
+
+    while (g_frame_pool.count == 0) {
+        // Wait for a free frame
+        pthread_cond_wait(&g_frame_pool.available, &g_frame_pool.lock);
+    }
+
+    struct frame* f = g_frame_pool.frames[g_frame_pool.tail];
+    g_frame_pool.tail = (g_frame_pool.tail + 1) % FRAME_POOL_SIZE;
+    g_frame_pool.count--;
+
+    pthread_mutex_unlock(&g_frame_pool.lock);
+    return f;
+}
+
+void return_frame_to_pool(struct frame* f) {
+    // Zero out all fields of the frame
+    memset(f, 0, sizeof(struct frame));
+
+    //return to pool
+    pthread_mutex_lock(&g_frame_pool.lock);
+
+    g_frame_pool.frames[g_frame_pool.head] = f;
+    g_frame_pool.head = (g_frame_pool.head + 1) % FRAME_POOL_SIZE;
+    g_frame_pool.count++;
+
+    pthread_cond_signal(&g_frame_pool.available);
+    pthread_mutex_unlock(&g_frame_pool.lock);
+}
+
+void init_frame_pool() {
+    pthread_mutex_init(&g_frame_pool.lock, NULL);
+    pthread_cond_init(&g_frame_pool.available, NULL);
+    g_frame_pool.head = 0;
+    g_frame_pool.tail = 0;
+
+    struct frame* f;
+    for (int i = 0; i < FRAME_POOL_SIZE; i++) {
+        f = create_frame();
+        return_frame_to_pool(f);
+    }
+}
+
+void cleanup_frame_pool(struct frame_pool *pool) {
+    if (!pool) return;
+
+    // Free all frames currently in the pool
+    while( pool->count != 0 )
+    {
+        free_frame(get_free_frame());
+    }
+
+    // Destroy mutex and condition variable
+    pthread_mutex_destroy(&pool->lock);
+    pthread_cond_destroy(&pool->available);
+
+    // Reset indices
+    pool->head = 0;
+    pool->tail = 0;
+}
+
+/////////////////////////// end frame pool ///////////////////////////
 
 //get real time as double from timespec
 static double realtime(struct timespec *tsptr)
@@ -572,18 +642,19 @@ static void apply_grayscale(const void *p, int size, unsigned char *gray_img)
 static int read_frame(void)
 {
     unsigned int i;
+    struct v4l2_buffer buf;//camera buf
     struct frame *f1;//frame object
 
     struct timespec frame_time;
     double current_realtime;
 
-    //create buffer obj
-    f1 = create_frame();
-    
-    CLEAR(*f1->buf);
+    //get new frame obj
+    f1 = get_free_frame();
 
-    f1->buf->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    f1->buf->memory = V4L2_MEMORY_MMAP;
+    CLEAR(buf);
+
+    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_MMAP;
 
     // record when process was called
     clock_gettime( CLOCK_REALTIME, &frame_time );
@@ -591,7 +662,7 @@ static int read_frame(void)
     //save frame time
     f1->image_capture_start_time = current_realtime-start_realtime;
 
-    if (-1 == xioctl(fd, VIDIOC_DQBUF, f1->buf)) //get image (dequeue buffer) from camera, save ptr to buf
+    if (-1 == xioctl(fd, VIDIOC_DQBUF, &buf)) //get image (dequeue buffer) from camera, save ptr to buf
     {
         switch (errno) //error handle
         {
@@ -610,11 +681,16 @@ static int read_frame(void)
         }
     }
     //valid buffer?
-    assert(f1->buf->index < n_buffers);
+    assert(buf.index < n_buffers);
 
+    //copy frame contents and relinquish frame buffer to camera
+    memcpy(f1->buf, buffers[buf.index].start, buf.bytesused);
+    f1->bytesused = buf.bytesused;
+    if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
+        errno_exit("VIDIOC_QBUF");
     
     //apply grayscale
-    apply_grayscale(buffers[f1->buf->index].start, f1->buf->bytesused, f1->gray_frame);
+    apply_grayscale(f1->buf, f1->bytesused, f1->gray_frame);
     //add new frame to new frame buffer
     add_to_buffer(&new_frame_cb, f1);
 
@@ -879,6 +955,7 @@ void init()
     init_circular_buffer( &new_frame_cb );
     init_circular_buffer( &post_proc_cb );
     init_circular_buffer( &save_frame_cb );
+    init_frame_pool();
 
     // initialization of V4L2
     open_device();
@@ -896,6 +973,7 @@ void uninit()
 {
     uninit_device();
     close_device();
+    cleanup_frame_pool( &g_frame_pool );
     free_circular_buffer( &new_frame_cb );
     free_circular_buffer( &post_proc_cb );
     free_circular_buffer( &save_frame_cb );
@@ -928,6 +1006,7 @@ void capture()
         fprintf(stderr, "select timeout\n");
         exit(EXIT_FAILURE);
     }
+
     //read frame
     read_frame();
 }
@@ -960,11 +1039,9 @@ void performDiff()
                         //copy current to previous
                         memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
-                        //release (queue buffer) image buffer back to camera for further use
-                        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                            errno_exit("VIDIOC_QBUF");
-                        //release frame - will not use further
-                        free_frame( f1 );
+                        //release frame back to pool
+                        return_frame_to_pool(f1);
+
                         diff_sync++;
                     }
                     else if( diff_sync < 7 && diff_sync > 0 )//use frams 1-6 to find least significant digits
@@ -980,11 +1057,8 @@ void performDiff()
                         memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
                         //toss
-                        //release (queue buffer) image buffer back to camera for further use
-                        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                            errno_exit("VIDIOC_QBUF");
-                        //release frame - will not use further
-                        free_frame( f1 );
+                        //release frame back to pool
+                        return_frame_to_pool(f1);
 
                         // //add to post process buffer - remove
                         // add_to_buffer( &post_proc_cb, f1 );
@@ -1026,11 +1100,8 @@ void performDiff()
                         memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
                         //toss
-                        //release (queue buffer) image buffer back to camera for further use
-                        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                            errno_exit("VIDIOC_QBUF");
-                        //release frame - will not use further
-                        free_frame( f1 );
+                        //release frame back to pool
+                        return_frame_to_pool(f1);
 
                         // //add to post process buffer
                         // add_to_buffer( &post_proc_cb, f1 );
@@ -1038,11 +1109,8 @@ void performDiff()
                 }
                 else //no change - toss
                 {
-                    //release (queue buffer) image buffer back to camera for further use
-                    if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                        errno_exit("VIDIOC_QBUF");
-                    //release frame - will not use further
-                    free_frame( f1 );
+                    //release frame back to pool
+                    return_frame_to_pool(f1);
                 }
             }
             else //normal operation
@@ -1061,21 +1129,15 @@ void performDiff()
                     //copy current to previous
                    // memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
-                    //release (queue buffer) image buffer back to camera for further use
-                    if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                        errno_exit("VIDIOC_QBUF");
-                    //release frame - will not use further
-                    free_frame( f1 );
+                    //release frame back to pool
+                    return_frame_to_pool(f1);
                 }
             }
         }
         else
         {
-            //release (queue buffer) image buffer back to camera for further use
-            if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-                errno_exit("VIDIOC_QBUF");
-            //release frame - will not use further
-            free_frame( f1 );
+            //release frame back to pool
+            return_frame_to_pool(f1);
         }
     }
 }
@@ -1095,7 +1157,7 @@ void postProcess()
     {
         //syslog( LOG_CRIT, "S3 process @ sec=%6.9lf\n", current_realtime-start_realtime );
         //apply rgb to image
-        apply_rgb( buffers[f1->buf->index].start, f1->buf->bytesused, f1->rgb_frame );
+        apply_rgb( f1->buf, f1->bytesused, f1->rgb_frame );
 
         //apply laplace if enabled
         if( en_laplace )
@@ -1130,10 +1192,8 @@ int saveImg()
         else if( en_diff_img ) //or save diff frame
             dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
         
-        //release (queue buffer) image buffer back to camera for further use
-        if (-1 == xioctl(fd, VIDIOC_QBUF, f1->buf))
-            errno_exit("VIDIOC_QBUF");
-        free_frame( f1 );
+        //release frame back to pool
+        return_frame_to_pool(f1);
 
         framecount++;
     }

@@ -482,8 +482,8 @@ void *Service_1(void *threadp)
         
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
 	    
-        // syslog(LOG_CRIT, "Thread 1 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "Thread 1 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
+        // syslog(LOG_CRIT, "Thread 1 start %d @ [ %6.9lf ] on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 1 start @ [ %6.9lf ] duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
     }
 
     // Resource shutdown here
@@ -516,8 +516,8 @@ clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&
 clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        // syslog(LOG_CRIT, "Thread 2 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "Thread 2 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
+        // syslog(LOG_CRIT, "Thread 2 start %d @ [ %6.9lf ] on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 2 start @ [ %6.9lf ] duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
     }
 
     pthread_exit((void *)0);
@@ -549,8 +549,8 @@ clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&
 clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        // syslog(LOG_CRIT, "Thread 3 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "Thread 3 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
+        // syslog(LOG_CRIT, "Thread 3 start %d @ [ %6.9lf ] on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+        //syslog(LOG_CRIT, "Thread 3 start @ [ %6.9lf ] duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
 
     }
 
@@ -587,8 +587,8 @@ clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&c
 
 	    // on order of up to milliseconds of latency to get time
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
-        // syslog(LOG_CRIT, "Thread 4 start %d @ <%6.9lf> on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "Thread 4 start @ <%6.9lf> duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
+        // syslog(LOG_CRIT, "Thread 4 start %d @ [ %6.9lf ] on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
+       // syslog(LOG_CRIT, "Thread 4 start @ [ %6.9lf ] duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
     }
 
     // Resource shutdown here
