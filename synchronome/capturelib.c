@@ -71,7 +71,7 @@ int en_laplace = 0;
 int en_diff_img = 0;
 
 
-#define BUFFER_SIZE 15  // circular buffer max size
+#define BUFFER_SIZE 32  // circular buffer max size
 
 // Format is used by a number of functions, so made as a file global
 static struct v4l2_format fmt;
@@ -118,7 +118,7 @@ static struct circular_buffer new_frame_cb; //new captured frame circ buf
 static struct circular_buffer post_proc_cb; //unique (diffed) image to be post processed circ buf
 static struct circular_buffer save_frame_cb; //post processed image - to be saved circ buf
 
-#define FRAME_POOL_SIZE 16 //frame pool - to avoid malloc/free
+#define FRAME_POOL_SIZE 32 //frame pool - to avoid malloc/free
 
 struct frame_pool {
     struct frame* frames[FRAME_POOL_SIZE];
@@ -502,9 +502,9 @@ static void apply_laplacian(const unsigned char *input, unsigned char *output, i
 /// @param curr_img ptr to current image
 /// @param size size of image (bytes)
 /// @param diffed_img ptr to save diffed image
+/// @param threshold threashold 0-255
 /// @return 1 if different, 0 otherwise
 static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int size, unsigned char *diffed_img, int threshold) {
-    //int threshold = ( speed_hz == 10 ) ? 30/*59*//*150*//*69*/ : 34;//10;  // threshold to ignore small differences
     int non_zero_count = 0;
     
     // Subtract images
@@ -522,7 +522,7 @@ static int detect_motion(unsigned char *prev_img, unsigned char *curr_img, int s
     printf("img %d | different pixes: %d\n", framecount, non_zero_count);
     //syslog( LOG_CRIT, "img %d | different pixes: %d\n", framecount, non_zero_count ); //diff display
     // If there are significant differences, consider motion detected
-    if ( non_zero_count > 350/*100*/){//( ( speed_hz == 10 ) ? 700 : 430 ) ) {  // more than 800 of pixels differ (found by test)
+    if ( non_zero_count > ( ( speed_hz == 10 ) ? 350 : 430 ) ) {  // more than 800 of pixels differ (found by test)
         //printf("Motion detected\n");
         return 1;
     } else {
@@ -574,7 +574,7 @@ static int detect_motion_masked(
 
     printf("img %d | different pixes: %d\n", framecount, non_zero_count);
 
-    return (non_zero_count > 300) ? 1 : 0;
+    return (non_zero_count > ( ( speed_hz == 10 ) ? 500 : 430 ) ) ? 1 : 0;
 }
 
 /// @brief applies rgb to image at *p and saves to *rgb_img with size 640x480x3 max
@@ -1030,9 +1030,9 @@ void performDiff()
     {
         if( ( captured_frames++ > -1 ) )
         {
-            if( diff_sync < 8 ) //use first 8 frames (found by test) to mask of lsb's
+            if( diff_sync < 8 && speed_hz == 10 ) //use first 8 frames (found by test) to mask of lsb's
             {
-                if( detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame, 20 ) ) //change detected
+                if( detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame, /*20*/20 ) ) //change detected
                 {
                     if( diff_sync == 0 )//first frame - toss
                     {
@@ -1113,9 +1113,34 @@ void performDiff()
                     return_frame_to_pool(f1);
                 }
             }
-            else //normal operation
+            else if( diff_sync == 8 || diff_sync == 9 ) //got mask, now sync to solid frame
             {
                 if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 135/*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
+                {
+                    //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
+                    //copy current to previous
+                    memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+
+                    //synced - now move on to normal operation
+                    diff_sync++;
+                }
+                //release frame back to pool
+                return_frame_to_pool(f1);
+            }
+            else if(diff_sync < 5 && speed_hz == 1 )
+            {
+                if( detect_motion( prev_frame, f1->gray_frame, GRAY_SIZE, f1->diff_frame, 40 ) ) //change detected
+                    diff_sync++;
+
+                //copy current to previous
+                memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+
+                //release frame back to pool
+                return_frame_to_pool(f1);
+            }
+            else //normal operation
+            {
+                if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 130/*135/*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
                 {
                     //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
                     //copy current to previous

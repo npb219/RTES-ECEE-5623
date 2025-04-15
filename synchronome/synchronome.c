@@ -29,7 +29,7 @@
 // Sequencer = RT_MAX	@ 100   Hz
 // Servcie_1 = RT_MAX-1	@ 20    Hz
 // Service_2 = RT_MAX-1	@ 20    Hz
-// Service_3 = RT_MAX-2	@ 10    Hz
+// Service_3 = RT_MAX-2	@ 10   Hz
 // Service_3 = RT_MAX-1	@ 10    Hz
 
 // This is necessary for CPU affinity macros in Linux
@@ -423,7 +423,7 @@ void Sequencer(int id)
         if((seqCnt % 5) == 1) sem_post(&semS1);
         // Servcie_2 = RT_MAX-1	@ 20 Hz
         if((seqCnt % 5) == 1) sem_post(&semS2);
-        // Servcie_3 = RT_MAX-2	@ 10 Hz
+        // Servcie_3 = RT_MAX-2	@ 9.1 Hz
         //if((seqCnt % 10) == 1 ) sem_post(&semS3);
         if((seqCnt % 10) == 1 ) sem_post(&semS3);
         // Servcie_4 = RT_MAX-1	@ 10 Hz
@@ -550,7 +550,7 @@ clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&c
 
         clock_gettime(MY_CLOCK_TYPE, &current_time_val); current_realtime=realtime(&current_time_val);
         // syslog(LOG_CRIT, "Thread 3 start %d @ [ %6.9lf ] on core <%d>", threadParams->threadIdx, current_realtime-start_realtime, sched_getcpu());
-        //syslog(LOG_CRIT, "Thread 3 start @ [ %6.9lf ] duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
+        // syslog(LOG_CRIT, "Thread 3 start @ [ %6.9lf ] duration: <%6.9lf>", startread_realtime, stopread_realtime-startread_realtime);
 
     }
 
