@@ -108,8 +108,6 @@ double realtime(struct timespec *tsptr);
 
 //frame rate
 int speed = 1;
-//frame count desired
-int counts_desired = 180;
 
 
 // For background on high resolution time-stamps and clocks:
@@ -258,15 +256,15 @@ void main(int argc, char *argv[])
     //get pthread scope
     pthread_attr_getscope(&main_attr, &scope);
 
-    if(scope == PTHREAD_SCOPE_SYSTEM)
-      syslog(LOG_CRIT, "PTHREAD SCOPE SYSTEM\n");
-    else if (scope == PTHREAD_SCOPE_PROCESS)
-      syslog(LOG_CRIT, "PTHREAD SCOPE PROCESS\n");
-    else
-      syslog(LOG_CRIT, "PTHREAD SCOPE UNKNOWN\n");
+    // if(scope == PTHREAD_SCOPE_SYSTEM)
+    //   syslog(LOG_CRIT, "PTHREAD SCOPE SYSTEM\n");
+    // else if (scope == PTHREAD_SCOPE_PROCESS)
+    //   syslog(LOG_CRIT, "PTHREAD SCOPE PROCESS\n");
+    // else
+    //   syslog(LOG_CRIT, "PTHREAD SCOPE UNKNOWN\n");
 
-    syslog(LOG_CRIT, "rt_max_prio=%d\n", rt_max_prio);
-    syslog(LOG_CRIT, "rt_min_prio=%d\n", rt_min_prio);
+    // syslog(LOG_CRIT, "rt_max_prio=%d\n", rt_max_prio);
+    // syslog(LOG_CRIT, "rt_min_prio=%d\n", rt_min_prio);
 
     //create threads' attr: fifo, explicit sched, cpu 3
     for(i=0; i < NUM_THREADS; i++)
@@ -299,7 +297,7 @@ void main(int argc, char *argv[])
         threadParams[i].threadIdx=i;
     }
    
-    syslog(LOG_CRIT, "Service threads will run on %d CPU cores\n", CPU_COUNT(&threadcpu));
+    //syslog(LOG_CRIT, "Service threads will run on %d CPU cores\n", CPU_COUNT(&threadcpu));
 
     // Create Service threads which will block awaiting release for:
     //
@@ -316,8 +314,8 @@ void main(int argc, char *argv[])
                      );
     if(rc < 0)
         perror("pthread_create for service 1");
-    else
-        syslog(LOG_CRIT, "pthread_create successful for service 1\n");
+    // else
+    //     syslog(LOG_CRIT, "pthread_create successful for service 1\n");
 
 
     // Service_2
@@ -327,8 +325,8 @@ void main(int argc, char *argv[])
     rc=pthread_create(&threads[1], &rt_sched_attr[1], Service_2, (void *)&(threadParams[1]));
     if(rc < 0)
         perror("pthread_create for service 2");
-    else
-        syslog(LOG_CRIT, "pthread_create successful for service 2\n");
+    // else
+    //     syslog(LOG_CRIT, "pthread_create successful for service 2\n");
 
 
     // Service_3
@@ -338,8 +336,8 @@ void main(int argc, char *argv[])
     rc=pthread_create(&threads[2], &rt_sched_attr[2], Service_3, (void *)&(threadParams[2]));
     if(rc < 0)
         perror("pthread_create for service 3");
-    else
-        syslog(LOG_CRIT, "pthread_create successful for service 3\n");
+    // else
+    //     syslog(LOG_CRIT, "pthread_create successful for service 3\n");
 
     // Service_4
     //
@@ -348,13 +346,13 @@ void main(int argc, char *argv[])
     rc=pthread_create(&threads[3], &rt_sched_attr[3], Service_4, (void *)&(threadParams[3]));
     if(rc < 0)
         perror("pthread_create for service 3");
-    else
-        syslog(LOG_CRIT, "pthread_create successful for service 3\n");
+    // else
+    //     syslog(LOG_CRIT, "pthread_create successful for service 3\n");
 
 
  
     // Create Sequencer thread, which like a cyclic executive, is highest prio
-    syslog(LOG_CRIT, "Start sequencer\n");
+    // syslog(LOG_CRIT, "Start sequencer\n");
     sequencePeriods=60;
 
     // Sequencer = RT_MAX	@ 100 Hz
@@ -388,7 +386,7 @@ void main(int argc, char *argv[])
     uninit();
 
 
-   syslog(LOG_CRIT, "TEST COMPLETE");
+//    syslog(LOG_CRIT, "TEST COMPLETE");
 }
 
 
@@ -580,7 +578,7 @@ void *Service_4(void *threadp)
 clock_gettime(MY_CLOCK_TYPE, &current_time_val); startread_realtime = realtime(&current_time_val) - start_realtime;
 
 	    // save image
-        if( saveImg() == counts_desired )
+        if( saveImg() )
             abortTest = 1;
 
 clock_gettime(MY_CLOCK_TYPE, &current_time_val); stopread_realtime = realtime(&current_time_val) - start_realtime;

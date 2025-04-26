@@ -11,6 +11,9 @@ extern int en_laplace;
 /// @brief if not 0, save diff img, overridden by en_laplace
 extern int en_diff_img;
 
+/// @brief frame count desired
+extern int counts_desired;
+
 /// @brief initialized camera, creates buffers for reads
 void init();
 
@@ -28,7 +31,7 @@ void postProcess();
 
 
 /// @brief saves available image in save queue
-/// @return number of frames saved
+/// @return 1 if hit framecount desired
 int  saveImg();
 
 #endif

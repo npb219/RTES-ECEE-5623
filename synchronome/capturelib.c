@@ -70,6 +70,8 @@ int en_laplace = 0;
 /// @brief if not 0, save diff img, overridden by en_laplace
 int en_diff_img = 0;
 
+int counts_desired = 180;
+
 
 #define BUFFER_SIZE 32  // circular buffer max size
 
@@ -138,6 +140,7 @@ struct buffer          *buffers;                //memory mapped buffers for new 
 static unsigned int     n_buffers;              //number of buffers allocated
 static int              force_format=1;         //force format of images from camera
 
+static int              capturecount = 0;                       //frames captured-  to be saved
 static int              framecount = 0;                         //current frame count acquired and saved
 static int              captured_frames = -START_UP_FRAMES;     //current frames captured
 static int              diff_sync = 0;                          //counter to sync diff function
@@ -1098,13 +1101,13 @@ void performDiff()
                         //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
                         //copy current to previous
                         memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
+                        
+                        // //add to post process buffer
+                        // add_to_buffer( &post_proc_cb, f1 );
 
                         //toss
                         //release frame back to pool
                         return_frame_to_pool(f1);
-
-                        // //add to post process buffer
-                        // add_to_buffer( &post_proc_cb, f1 );
                     }
                 }
                 else //no change - toss
@@ -1113,9 +1116,9 @@ void performDiff()
                     return_frame_to_pool(f1);
                 }
             }
-            else if( diff_sync == 8 || diff_sync == 9 ) //got mask, now sync to solid frame
+            else if( ( diff_sync >= 8 && diff_sync <= 13 ) && speed_hz == 10 ) //got mask, now sync to solid frame
             {
-                if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 135/*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
+                if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 150/*135*//*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
                 {
                     //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
                     //copy current to previous
@@ -1140,14 +1143,14 @@ void performDiff()
             }
             else //normal operation
             {
-                if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 130/*135/*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
+                if( detect_motion_masked( prev_frame, f1->gray_frame, HRES, VRES, GRAY_SIZE, f1->diff_frame, ( speed_hz == 10 ) ? 120/*130//*135/*59*//*150*//*69*/ : 34, min_x, max_x, min_y, max_y) ) //diff image
                 {
                     //syslog( LOG_CRIT, "S2 diff @ sec=%6.9lf\n", current_realtime-start_realtime );
                     //copy current to previous
                     memcpy( prev_frame, f1->gray_frame, GRAY_SIZE );
 
                     //add to post process buffer
-                    add_to_buffer( &post_proc_cb, f1 );
+                    add_to_buffer( &post_proc_cb, f1 );                
                 }
                 else//not different - toss
                 {
@@ -1198,6 +1201,7 @@ int saveImg()
     struct frame *f1;//frame object
     struct timespec frame_time;
     double current_realtime;
+    int retVal = 0;
     // record when process was called
     // clock_gettime( CLOCK_REALTIME, &frame_time );
     // current_realtime = realtime( &frame_time );
@@ -1205,23 +1209,33 @@ int saveImg()
     f1 = remove_from_buffer( &save_frame_cb );
     if( f1!=NULL )
     {
-        //syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
-        syslog( LOG_CRIT, "[Frame Count: %d][Image Capture Start Time: %6.9lf]\n", framecount, f1->image_capture_start_time );
+        if( framecount < counts_desired )
+        {
+            //syslog(LOG_CRIT, "S4 save @ sec=%6.9lf\n", current_realtime-start_realtime);
+            syslog( LOG_CRIT, "[Frame Count: %d][Image Capture Start Time: %6.9lf]\n", framecount, f1->image_capture_start_time );
 
-        // dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
-        dump_ppm( f1->rgb_frame, RGB_SIZE, framecount, &frame_time );
+            // dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
+            dump_ppm( f1->rgb_frame, RGB_SIZE, framecount, &frame_time );
 
-        //save laplace if enabled
-        if( en_laplace )
-            dump_pgm( f1->laplace_frame, GRAY_SIZE, framecount, &frame_time );
-        else if( en_diff_img ) //or save diff frame
-            dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
-        
-        //release frame back to pool
-        return_frame_to_pool(f1);
+            //save laplace if enabled
+            if( en_laplace )
+                dump_pgm( f1->laplace_frame, GRAY_SIZE, framecount, &frame_time );
+            else if( en_diff_img ) //or save diff frame
+                dump_pgm( f1->diff_frame, GRAY_SIZE, framecount, &frame_time );
+            
+            //release frame back to pool
+            return_frame_to_pool(f1);
 
-        framecount++;
+            retVal = ( framecount == counts_desired );
+                
+            framecount++;
+        }
+        else
+        {
+            //release frame back to pool - hit max
+            retVal = 1;
+        }
     }
 
-    return framecount;
+    return retVal;
 }
